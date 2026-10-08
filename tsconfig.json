@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    
+    /* Target and Environment */
+    "target": "ES2022", // Specifies the JavaScript language version output
+    "module": "esnext", // Specifies the module code generation system
+    "moduleResolution": "bundler", // Tells TypeScript how to look up modules/packages
+    
+    /* Strictness and Safety Checks */
+    "strict": true, // Enables all strict type-checking options (highly recommended)
+    //"noImplicitAny": true, // Raises errors on expressions and declarations with an implied 'any' type
+    //"strictNullChecks": true, // Ensures 'null' and 'undefined' are handled explicitly
+    "noEmit": true,
+    
+    
+    /* Output Settings */
+    // "outDir": "./dist", // Redirects output JavaScript files to this specific folder
+    // "sourceMap": true, // Generates '.map' files for easier debugging in browser/editor
+    // "removeComments": true, // Strips comments from the compiled JavaScript files
+
+    /* Interop Constraints */
+    "esModuleInterop": true, // Enables compatibility when importing CommonJS packages
+    "forceConsistentCasingInFileNames": true, // Disallows inconsistently-cased references to the same file
+
+    /* Advanced (often used with tools like Vite/React) */
+    "jsx": "react-jsx", // Specifies JSX code generation for UI frameworks
+    "skipLibCheck": true, // Skips type-checking of declaration files (.d.ts) to speed up compilation
+
+    "types": [
+      "node"
+    ]
+  },
+  
+  /* File Management */
+  "include": [
+    "src/**/*",
+    "tests/**/*.ts",
+    "tests-vibed/**/*.ts",
+    "playwright.config.ts"
+  ], // Specifies the folders/files TypeScript should compile
+  "exclude": [
+    "node_modules",
+    "dist"
+  ] // Tells TypeScript to ignore these folders entirely
+}
