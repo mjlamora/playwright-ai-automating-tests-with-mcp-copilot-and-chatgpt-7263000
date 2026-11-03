@@ -4,6 +4,12 @@ test.describe('Create Bug - Open create-bug modal from board', () => {
   test('should open the create-bug modal from the board page', async ({ loginPage, boardPage, createBugModal }) => {
     // Act
     await loginPage.loginWithFirstUser();
+
+    // Assert
+    await expect(boardPage.page).toHaveURL(/\/board$/);
+    await expect(boardPage.newBugButton).toBeVisible();
+
+    // Act
     await boardPage.clickNewBugButton();
 
     // Assert
