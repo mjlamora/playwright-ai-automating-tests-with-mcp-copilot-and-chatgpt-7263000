@@ -12,3 +12,6 @@ When working on the **BuggyBoard** web app (bug tracker SUT for the Playwright c
 3. **Update** `specs/PROGRESS.md` when a feature or step is completed.
 4. **Pause for review** after each feature; do not start the next feature until the user directs.
 5. **Ask the user** when a decision is unclear instead of assuming.
+6. **Write atomic tests rather than grand tours** so that each test is focused on a single feature or behavior.
+   - Tests should follow the Arrange-Act-Assert pattern.
+   - Each test should be independent and not rely on the state of other tests.
