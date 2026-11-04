@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { expect, type Page, type Request } from "@playwright/test";
+import { BoardPage } from "../pages/BoardPage";
+import { LoginPage } from "../pages/LoginPage";
 
 interface UserAccount {
   username: string;
@@ -32,18 +34,11 @@ if (!user) {
 }
 
 export async function signIn(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel("Username").fill(user.username);
-  await page.getByLabel("Password").fill(user.password);
-  await page.getByRole("button", { name: "Login" }).click();
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  await loginPage.signIn(user.username, user.password);
 
   await expect(page).toHaveURL(/\/board$/);
-}
-
-export function bugRow(page: Page, title: string) {
-  return page
-    .getByRole("button")
-    .filter({ has: page.getByText(title, { exact: true }) });
 }
 
 export async function createBug(
@@ -54,19 +49,19 @@ export async function createBug(
   const title = `edit-test-${randomUUID()}`;
   const description = `Fixture description for ${title}`;
 
-  await page.getByRole("button", { name: "New Bug" }).click();
-  const dialog = page.getByRole("dialog", { name: "Create bug" });
-  await dialog.getByLabel("Title").fill(title);
-  await dialog.getByLabel("Severity").selectOption(severity);
-  await dialog.getByLabel("Owner").fill(user.username);
-  await dialog.getByLabel("Description").fill(description);
+  const boardPage = new BoardPage(page);
+  const dialog = await boardPage.openCreateBugDialog();
+  await dialog.titleInput.fill(title);
+  await dialog.severitySelect.selectOption(severity);
+  await dialog.ownerInput.fill(user.username);
+  await dialog.descriptionInput.fill(description);
 
   const createResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/bugs",
   );
-  await dialog.getByRole("button", { name: "Save" }).click();
+  await dialog.saveButton.click();
   const createResponse = await createResponsePromise;
   expect(createResponse.status()).toBe(201);
 
@@ -81,8 +76,8 @@ export async function createBug(
   };
   fixtures.push(fixture);
 
-  await expect(dialog).toBeHidden();
-  await expect(bugRow(page, title)).toBeVisible();
+  await expect(dialog.dialog).toBeHidden();
+  await expect(boardPage.bugRow(title)).toBeVisible();
   return fixture;
 }
 

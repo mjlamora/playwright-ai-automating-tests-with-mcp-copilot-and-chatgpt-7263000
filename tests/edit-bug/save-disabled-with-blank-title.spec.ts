@@ -2,13 +2,13 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   recordUpdateRequests,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -25,21 +25,17 @@ test.describe("Edit bug", () => {
   });
 
   test("disables Save when the title is blank", async ({ page }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the fixture and clear Title.
-    await bugRow(page, fixture.title).click();
-    const dialog = page.getByRole("dialog");
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
     const updateRequests = recordUpdateRequests(page);
-    await dialog.getByLabel("Title").fill("");
-    await expect(
-      dialog.getByRole("button", { name: "Save" }),
-    ).toBeDisabled();
-    await expect(dialog.getByLabel("Title")).toHaveValue("");
+    await editBugDialog.titleInput.fill("");
+    await expect(editBugDialog.saveButton).toBeDisabled();
+    await expect(editBugDialog.titleInput).toHaveValue("");
     expect(updateRequests).toHaveLength(0);
 
-    await page.reload();
-    await bugRow(page, fixture.title).click();
-    await expect(page.getByRole("dialog").getByLabel("Title")).toHaveValue(
-      fixture.title,
-    );
+    await boardPage.reload();
+    const reopenedDialog = await boardPage.openEditBug(fixture.title);
+    await expect(reopenedDialog.titleInput).toHaveValue(fixture.title);
   });
 });

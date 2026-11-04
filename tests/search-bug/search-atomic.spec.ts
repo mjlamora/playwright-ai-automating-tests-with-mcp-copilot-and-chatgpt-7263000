@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
+import { BoardPage } from "../pages/BoardPage";
+import { LoginPage } from "../pages/LoginPage";
 
 const bugData = [
   { title: 'Login page crashes on empty password', severity: 'HIGH', owner: 'buggy', description: 'App crashes when submitting an empty password on login.' },
@@ -17,11 +19,10 @@ test.describe('Search Bug', () => {
   let createdBugIds: number[] = [];
 
   test.beforeEach(async ({ page, request }) => {
-    await page.goto('/login');
-    await page.getByLabel('Username').fill('buggy');
-    await page.getByLabel('Password').fill('1970beetle');
-    await page.getByRole('button', { name: 'Login' }).click();
-    await page.waitForURL(/\/board$/);
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
+    await loginPage.signIn("buggy", "1970beetle");
+    await expect(page).toHaveURL(/\/board$/);
 
     createdBugIds = [];
     for (const bug of bugData) {
@@ -30,7 +31,7 @@ test.describe('Search Bug', () => {
       createdBugIds.push(body.id);
     }
 
-    await page.reload();
+    await new BoardPage(page).reload();
   });
 
   test.afterEach(async ({ request }) => {
@@ -41,22 +42,22 @@ test.describe('Search Bug', () => {
   });
 
   test('shows all bugs matching a broad title search', async ({ page }) => {
-    const searchInput = page.getByRole('search', { name: 'Search bugs by title' });
+    const boardPage = new BoardPage(page);
 
-    await searchInput.fill('page');
+    await boardPage.searchInput.fill("page");
 
     for (const bug of bugData) {
-      await expect(page.getByRole('cell', { name: bug.title, exact: true })).toBeVisible();
+      await expect(boardPage.titleCell(bug.title)).toBeVisible();
     }
   });
 
   test('shows matching bugs and hides non-matching bugs', async ({ page }) => {
-    const searchInput = page.getByRole('search', { name: 'Search bugs by title' });
+    const boardPage = new BoardPage(page);
 
-    await searchInput.fill('login');
+    await boardPage.searchInput.fill("login");
 
     for (const bug of bugData) {
-      const titleCell = page.getByRole('cell', { name: bug.title, exact: true });
+      const titleCell = boardPage.titleCell(bug.title);
       if (bug.title.toLowerCase().includes('login')) {
         await expect(titleCell).toBeVisible();
       } else {
@@ -66,14 +67,14 @@ test.describe('Search Bug', () => {
   });
 
   test('shows a no-results message when no bug title matches', async ({ page }) => {
-    const searchInput = page.getByRole('search', { name: 'Search bugs by title' });
+    const boardPage = new BoardPage(page);
 
-    await searchInput.fill('xyzzy');
+    await boardPage.searchInput.fill("xyzzy");
 
-    await expect(page.getByRole('cell', { name: 'No bugs matched.', exact: true })).toBeVisible();
+    await expect(boardPage.noResultsCell).toBeVisible();
 
     for (const bug of bugData) {
-      await expect(page.getByRole('cell', { name: bug.title, exact: true })).not.toBeVisible();
+      await expect(boardPage.titleCell(bug.title)).not.toBeVisible();
     }
   });
 });

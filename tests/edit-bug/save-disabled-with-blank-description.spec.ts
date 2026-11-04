@@ -2,12 +2,12 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -24,19 +24,15 @@ test.describe("Edit bug", () => {
   });
 
   test("disables Save when the description is blank", async ({ page }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the fixture and clear Description.
-    await bugRow(page, fixture.title).click();
-    const dialog = page.getByRole("dialog");
-    await dialog.getByLabel("Description").fill("");
-    await expect(
-      dialog.getByRole("button", { name: "Save" }),
-    ).toBeDisabled();
-    await expect(dialog.getByLabel("Description")).toHaveValue("");
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    await editBugDialog.descriptionInput.fill("");
+    await expect(editBugDialog.saveButton).toBeDisabled();
+    await expect(editBugDialog.descriptionInput).toHaveValue("");
 
-    await page.reload();
-    await bugRow(page, fixture.title).click();
-    await expect(
-      page.getByRole("dialog").getByLabel("Description"),
-    ).toHaveValue(fixture.description);
+    await boardPage.reload();
+    const reopenedDialog = await boardPage.openEditBug(fixture.title);
+    await expect(reopenedDialog.descriptionInput).toHaveValue(fixture.description);
   });
 });

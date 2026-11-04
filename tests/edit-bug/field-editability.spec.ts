@@ -2,12 +2,12 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -26,16 +26,11 @@ test.describe("Edit bug", () => {
   test("keeps the ID read-only and allows editing the other fields", async ({
     page,
   }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the fixture bug's row.
-    await bugRow(page, fixture.title).click();
-
-    const dialog = page.getByRole("dialog");
-    const id = dialog.getByLabel("ID");
-    const title = dialog.getByLabel("Title");
-    const severity = dialog.getByLabel("Severity");
-    const state = dialog.getByLabel("State");
-    const owner = dialog.getByLabel("Owner");
-    const description = dialog.getByLabel("Description");
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    const { idInput: id, titleInput: title, severitySelect: severity } = editBugDialog;
+    const { stateSelect: state, ownerInput: owner, descriptionInput: description } = editBugDialog;
     await expect(id).toHaveValue(String(fixture.id));
     await expect(id).toHaveJSProperty("readOnly", true);
     await expect(title).toBeEditable();
@@ -51,17 +46,13 @@ test.describe("Edit bug", () => {
     await owner.fill("edited-owner");
     await description.fill("Edited description that will be cancelled");
     await expect(id).toHaveValue(String(fixture.id));
-    await expect(dialog.getByRole("button", { name: "Save" })).toBeEnabled();
-    await dialog.getByRole("button", { name: "Cancel" }).click();
-    await expect(dialog).toBeHidden();
+    await expect(editBugDialog.saveButton).toBeEnabled();
+    await editBugDialog.cancelButton.click();
+    await expect(editBugDialog.dialog).toBeHidden();
 
-    await page.reload();
-    await bugRow(page, fixture.title).click();
-    await expect(page.getByRole("dialog").getByLabel("ID")).toHaveValue(
-      String(fixture.id),
-    );
-    await expect(page.getByRole("dialog").getByLabel("Title")).toHaveValue(
-      fixture.title,
-    );
+    await boardPage.reload();
+    const reopenedDialog = await boardPage.openEditBug(fixture.title);
+    await expect(reopenedDialog.idInput).toHaveValue(String(fixture.id));
+    await expect(reopenedDialog.titleInput).toHaveValue(fixture.title);
   });
 });

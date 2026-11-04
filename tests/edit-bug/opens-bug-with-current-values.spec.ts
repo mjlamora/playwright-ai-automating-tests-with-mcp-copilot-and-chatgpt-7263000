@@ -2,12 +2,12 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -24,23 +24,18 @@ test.describe("Edit bug", () => {
   });
 
   test("opens an existing bug with its current values", async ({ page }) => {
+    const boardPage = new BoardPage(page);
     // 1. Click the row for the newly created bug.
-    await bugRow(page, fixture.title).click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    await expect(
-      dialog.getByRole("heading", { name: `Edit bug #${fixture.id}` }),
-    ).toBeVisible();
-    await expect(dialog.getByLabel("ID")).toHaveValue(String(fixture.id));
-    await expect(dialog.getByLabel("Title")).toHaveValue(fixture.title);
-    await expect(dialog.getByLabel("Severity")).toHaveValue(fixture.severity);
-    await expect(dialog.getByLabel("State")).toHaveValue(fixture.state);
-    await expect(dialog.getByLabel("Owner")).toHaveValue(fixture.owner);
-    await expect(dialog.getByLabel("Description")).toHaveValue(
-      fixture.description,
-    );
-    await expect(dialog.getByRole("button", { name: "Save" })).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeVisible();
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    await expect(editBugDialog.dialog).toBeVisible();
+    await expect(editBugDialog.heading(fixture.id)).toBeVisible();
+    await expect(editBugDialog.idInput).toHaveValue(String(fixture.id));
+    await expect(editBugDialog.titleInput).toHaveValue(fixture.title);
+    await expect(editBugDialog.severitySelect).toHaveValue(fixture.severity);
+    await expect(editBugDialog.stateSelect).toHaveValue(fixture.state);
+    await expect(editBugDialog.ownerInput).toHaveValue(fixture.owner);
+    await expect(editBugDialog.descriptionInput).toHaveValue(fixture.description);
+    await expect(editBugDialog.saveButton).toBeVisible();
+    await expect(editBugDialog.cancelButton).toBeVisible();
   });
 });

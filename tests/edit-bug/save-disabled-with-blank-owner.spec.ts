@@ -2,12 +2,12 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -24,19 +24,15 @@ test.describe("Edit bug", () => {
   });
 
   test("disables Save when the owner is blank", async ({ page }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the fixture and clear Owner.
-    await bugRow(page, fixture.title).click();
-    const dialog = page.getByRole("dialog");
-    await dialog.getByLabel("Owner").fill("");
-    await expect(
-      dialog.getByRole("button", { name: "Save" }),
-    ).toBeDisabled();
-    await expect(dialog.getByLabel("Owner")).toHaveValue("");
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    await editBugDialog.ownerInput.fill("");
+    await expect(editBugDialog.saveButton).toBeDisabled();
+    await expect(editBugDialog.ownerInput).toHaveValue("");
 
-    await page.reload();
-    await bugRow(page, fixture.title).click();
-    await expect(
-      page.getByRole("dialog").getByLabel("Owner"),
-    ).toHaveValue(fixture.owner);
+    await boardPage.reload();
+    const reopenedDialog = await boardPage.openEditBug(fixture.title);
+    await expect(reopenedDialog.ownerInput).toHaveValue(fixture.owner);
   });
 });

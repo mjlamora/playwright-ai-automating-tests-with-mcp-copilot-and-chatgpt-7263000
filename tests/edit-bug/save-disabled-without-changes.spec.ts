@@ -2,12 +2,12 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -24,10 +24,9 @@ test.describe("Edit bug", () => {
   });
 
   test("disables Save when there are no changes", async ({ page }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the fixture without changing any field.
-    await bugRow(page, fixture.title).click();
-    await expect(
-      page.getByRole("dialog").getByRole("button", { name: "Save" }),
-    ).toBeDisabled();
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    await expect(editBugDialog.saveButton).toBeDisabled();
   });
 });

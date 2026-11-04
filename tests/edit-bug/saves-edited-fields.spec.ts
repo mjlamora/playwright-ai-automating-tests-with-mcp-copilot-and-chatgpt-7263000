@@ -2,12 +2,12 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -26,19 +26,19 @@ test.describe("Edit bug", () => {
   test("saves edited fields and preserves them after reload", async ({
     page,
   }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the fixture and change its editable fields.
-    await bugRow(page, fixture.title).click();
-    const dialog = page.getByRole("dialog");
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
     const updated = {
       title: `${fixture.title}-updated`,
       severity: "low",
       owner: "updated-owner",
       description: "Updated description persisted by the edit form",
     };
-    await dialog.getByLabel("Title").fill(updated.title);
-    await dialog.getByLabel("Severity").selectOption(updated.severity);
-    await dialog.getByLabel("Owner").fill(updated.owner);
-    await dialog.getByLabel("Description").fill(updated.description);
+    await editBugDialog.titleInput.fill(updated.title);
+    await editBugDialog.severitySelect.selectOption(updated.severity);
+    await editBugDialog.ownerInput.fill(updated.owner);
+    await editBugDialog.descriptionInput.fill(updated.description);
 
     // 2. Save the edits.
     const updateResponsePromise = page.waitForResponse(
@@ -46,32 +46,24 @@ test.describe("Edit bug", () => {
         response.request().method() === "PUT" &&
         new URL(response.url()).pathname === `/api/bugs/${fixture.id}`,
     );
-    await dialog.getByRole("button", { name: "Save" }).click();
+    await editBugDialog.saveButton.click();
     const updateResponse = await updateResponsePromise;
     expect(updateResponse.status()).toBe(200);
-    await expect(dialog).toBeHidden();
+    await expect(editBugDialog.dialog).toBeHidden();
 
-    const updatedRow = bugRow(page, updated.title);
-    await expect(updatedRow).toBeVisible();
-    await expect(updatedRow.getByRole("cell", { name: "LOW" })).toBeVisible();
+    await expect(boardPage.bugRow(updated.title)).toBeVisible();
     await expect(
-      updatedRow.getByRole("cell", { name: updated.owner }),
+      boardPage.bugSeverityCell(updated.title, "LOW"),
     ).toBeVisible();
+    await expect(boardPage.bugOwnerCell(updated.title, updated.owner)).toBeVisible();
 
     // 3. Reload and verify the saved fields.
-    await page.reload();
-    await bugRow(page, updated.title).click();
-    const reopenedDialog = page.getByRole("dialog");
-    await expect(reopenedDialog.getByLabel("ID")).toHaveValue(
-      String(fixture.id),
-    );
-    await expect(reopenedDialog.getByLabel("Title")).toHaveValue(updated.title);
-    await expect(reopenedDialog.getByLabel("Severity")).toHaveValue(
-      updated.severity,
-    );
-    await expect(reopenedDialog.getByLabel("Owner")).toHaveValue(updated.owner);
-    await expect(reopenedDialog.getByLabel("Description")).toHaveValue(
-      updated.description,
-    );
+    await boardPage.reload();
+    const reopenedDialog = await boardPage.openEditBug(updated.title);
+    await expect(reopenedDialog.idInput).toHaveValue(String(fixture.id));
+    await expect(reopenedDialog.titleInput).toHaveValue(updated.title);
+    await expect(reopenedDialog.severitySelect).toHaveValue(updated.severity);
+    await expect(reopenedDialog.ownerInput).toHaveValue(updated.owner);
+    await expect(reopenedDialog.descriptionInput).toHaveValue(updated.description);
   });
 });

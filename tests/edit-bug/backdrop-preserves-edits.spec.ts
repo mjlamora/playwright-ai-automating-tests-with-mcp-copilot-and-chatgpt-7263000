@@ -2,13 +2,13 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   recordUpdateRequests,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -25,22 +25,20 @@ test.describe("Edit bug", () => {
   });
 
   test("preserves edits when clicking the backdrop", async ({ page }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the fixture and change its title and description.
-    await bugRow(page, fixture.title).click();
-    const dialog = page.getByRole("dialog");
+    const editBugDialog = await boardPage.openEditBug(fixture.title);
     const changedTitle = `${fixture.title}-unsaved`;
     const changedDescription = "Unsaved description change";
-    await dialog.getByLabel("Title").fill(changedTitle);
-    await dialog.getByLabel("Description").fill(changedDescription);
+    await editBugDialog.titleInput.fill(changedTitle);
+    await editBugDialog.descriptionInput.fill(changedDescription);
     const updateRequests = recordUpdateRequests(page);
 
     // 2. Click the dimmed backdrop outside the modal panel.
-    await dialog.click({ position: { x: 1, y: 1 } });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel("Title")).toHaveValue(changedTitle);
-    await expect(dialog.getByLabel("Description")).toHaveValue(
-      changedDescription,
-    );
+    await editBugDialog.clickBackdrop();
+    await expect(editBugDialog.dialog).toBeVisible();
+    await expect(editBugDialog.titleInput).toHaveValue(changedTitle);
+    await expect(editBugDialog.descriptionInput).toHaveValue(changedDescription);
     expect(updateRequests).toHaveLength(0);
   });
 });

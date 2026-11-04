@@ -2,13 +2,13 @@
 // seed: tests/seed.spec.ts
 import { expect, test } from "@playwright/test";
 import {
-  bugRow,
   cleanupBugs,
   createBug,
   type BugFixture,
   type Severity,
   signIn,
 } from "./edit-bug-setup";
+import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
@@ -26,6 +26,7 @@ test.describe("Edit bug", () => {
   });
 
   test("offers all severities with matching color coding", async ({ page }) => {
+    const boardPage = new BoardPage(page);
     // 1. Open the HIGH fixture and verify the severity choices.
     const severities: Severity[] = ["high", "mid", "low"];
     for (const severityValue of severities) {
@@ -34,21 +35,18 @@ test.describe("Edit bug", () => {
         throw new Error(`Missing ${severityValue} severity fixture.`);
       }
 
-      const row = bugRow(page, fixture.title);
-      const boardBadge = row.getByText(severityValue.toUpperCase(), {
-        exact: true,
-      });
-      await row.click();
-
-      const dialog = page.getByRole("dialog");
-      const severity = dialog.getByLabel("Severity");
-      await expect(severity.locator("option")).toHaveText([
+      const boardBadge = boardPage.severityBadge(
+        fixture.title,
+        severityValue.toUpperCase(),
+      );
+      const editBugDialog = await boardPage.openEditBug(fixture.title);
+      await expect(editBugDialog.severityOptions).toHaveText([
         "HIGH",
         "MID",
         "LOW",
       ]);
-      await expect(severity).toHaveValue(severityValue);
-      const selectedColor = await severity.evaluate(
+      await expect(editBugDialog.severitySelect).toHaveValue(severityValue);
+      const selectedColor = await editBugDialog.severitySelect.evaluate(
         (element) => getComputedStyle(element).color,
       );
       const badgeColor = await boardBadge.evaluate(
@@ -57,8 +55,8 @@ test.describe("Edit bug", () => {
       expect(selectedColor).toBe(badgeColor);
 
       // 2. Cancel without changing the saved bug.
-      await dialog.getByRole("button", { name: "Cancel" }).click();
-      await expect(dialog).toBeHidden();
+      await editBugDialog.cancelButton.click();
+      await expect(editBugDialog.dialog).toBeHidden();
     }
   });
 });

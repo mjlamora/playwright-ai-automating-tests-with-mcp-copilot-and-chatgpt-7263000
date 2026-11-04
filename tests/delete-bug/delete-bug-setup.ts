@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, type Page } from "@playwright/test";
+import { BoardPage } from "../pages/BoardPage";
+import { LoginPage } from "../pages/LoginPage";
 
 interface UserAccount {
   username: string;
@@ -25,10 +27,9 @@ if (!user) {
 }
 
 export async function signIn(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel("Username").fill(user.username);
-  await page.getByLabel("Password").fill(user.password);
-  await page.getByRole("button", { name: "Login" }).click();
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  await loginPage.signIn(user.username, user.password);
 
   await expect(page).toHaveURL(/\/board$/);
 }
@@ -38,28 +39,27 @@ export async function createBug(
   uniqueSuffix: string,
 ): Promise<BugFixture> {
   const title = `delete-test-${uniqueSuffix}`;
-  await page.getByRole("button", { name: "New Bug" }).click();
-
-  const dialog = page.getByRole("dialog", { name: "Create bug" });
-  await dialog.getByLabel("Title").fill(title);
-  await dialog.getByLabel("Severity").selectOption("high");
-  await dialog.getByLabel("Owner").fill(user.username);
-  await dialog.getByLabel("Description").fill(`Fixture for ${title}`);
+  const boardPage = new BoardPage(page);
+  const dialog = await boardPage.openCreateBugDialog();
+  await dialog.titleInput.fill(title);
+  await dialog.severitySelect.selectOption("high");
+  await dialog.ownerInput.fill(user.username);
+  await dialog.descriptionInput.fill(`Fixture for ${title}`);
 
   const createResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/bugs",
   );
-  await dialog.getByRole("button", { name: "Save" }).click();
+  await dialog.saveButton.click();
   const createResponse = await createResponsePromise;
   expect(createResponse.status()).toBe(201);
 
   const createdBug = (await createResponse.json()) as CreatedBugResponse;
   const fixture = { id: createdBug.id, title };
-  await expect(dialog).toBeHidden();
+  await expect(dialog.dialog).toBeHidden();
   await expect(
-    page.getByRole("button").filter({ hasText: fixture.title }),
+    boardPage.bugRow(fixture.title),
   ).toBeVisible();
 
   return fixture;
