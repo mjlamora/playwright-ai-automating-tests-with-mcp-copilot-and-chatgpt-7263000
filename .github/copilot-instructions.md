@@ -15,3 +15,4 @@ When working on the **BuggyBoard** web app (bug tracker SUT for the Playwright c
 6. **Write atomic tests rather than grand tours** so that each test is focused on a single feature or behavior.
    - Tests should follow the Arrange-Act-Assert pattern.
    - Each test should be independent and not rely on the state of other tests.
+7. **For new or refactored Playwright tests**, follow `specs/engineering/test-automation-patterns.md`. Use a Page Object Model instead of long raw `page` call chains, with one page object class per app page under `tests/pages/` and one class per file.
