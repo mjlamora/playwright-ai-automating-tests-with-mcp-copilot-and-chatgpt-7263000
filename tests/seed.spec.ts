@@ -1,7 +1,5 @@
 import { readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
-import { BoardPage } from "./pages/BoardPage";
-import { LoginPage } from "./pages/LoginPage";
+import { expect, test } from "./fixtures/page-objects";
 
 interface UserAccount {
   username: string;
@@ -18,12 +16,15 @@ if (!user) {
 }
 
 test.describe("Seed", () => {
-  test("logs in with the first user account",{tag: '@seed'}, async ({ page }) => {
-    const loginPage = new LoginPage(page);
+  test("logs in with the first user account", { tag: "@seed" }, async ({
+    page,
+    loginPage,
+    boardPage,
+  }) => {
     await loginPage.goto();
     await loginPage.signIn(user.username, user.password);
 
     await expect(page).toHaveURL(/\/board$/);
-    await expect(new BoardPage(page).newBugButton).toBeVisible();
+    await expect(boardPage.newBugButton).toBeVisible();
   });
 });

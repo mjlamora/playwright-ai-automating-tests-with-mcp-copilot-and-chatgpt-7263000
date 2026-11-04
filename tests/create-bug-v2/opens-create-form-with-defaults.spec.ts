@@ -1,7 +1,5 @@
 import { readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
-import { BoardPage } from "../pages/BoardPage";
-import { LoginPage } from "../pages/LoginPage";
+import { expect, test } from "../fixtures/page-objects";
 
 interface UserAccount {
   username: string;
@@ -19,14 +17,15 @@ if (!user) {
 
 test("opens the create form with the current user's owner value", async ({
   page,
+  loginPage,
+  boardPage,
+  createBugDialog,
 }) => {
-  const loginPage = new LoginPage(page);
   await loginPage.goto();
   await loginPage.signIn(user.username, user.password);
 
   await expect(page).toHaveURL(/\/board$/);
-  const boardPage = new BoardPage(page);
-  const createBugDialog = await boardPage.openCreateBugDialog();
+  await boardPage.openCreateBugDialog();
 
   await expect(createBugDialog.dialog).toBeVisible();
 

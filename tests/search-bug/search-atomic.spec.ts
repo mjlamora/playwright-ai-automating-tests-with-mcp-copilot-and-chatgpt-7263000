@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-import { BoardPage } from "../pages/BoardPage";
-import { LoginPage } from "../pages/LoginPage";
+import { expect, test } from "../fixtures/page-objects";
 
 const bugData = [
   { title: 'Login page crashes on empty password', severity: 'HIGH', owner: 'buggy', description: 'App crashes when submitting an empty password on login.' },
@@ -18,8 +16,7 @@ const bugData = [
 test.describe('Search Bug', () => {
   let createdBugIds: number[] = [];
 
-  test.beforeEach(async ({ page, request }) => {
-    const loginPage = new LoginPage(page);
+  test.beforeEach(async ({ page, request, loginPage, boardPage }) => {
     await loginPage.goto();
     await loginPage.signIn("buggy", "1970beetle");
     await expect(page).toHaveURL(/\/board$/);
@@ -31,7 +28,7 @@ test.describe('Search Bug', () => {
       createdBugIds.push(body.id);
     }
 
-    await new BoardPage(page).reload();
+    await boardPage.reload();
   });
 
   test.afterEach(async ({ request }) => {
@@ -41,9 +38,7 @@ test.describe('Search Bug', () => {
     createdBugIds = [];
   });
 
-  test('shows all bugs matching a broad title search', async ({ page }) => {
-    const boardPage = new BoardPage(page);
-
+  test('shows all bugs matching a broad title search', async ({ boardPage }) => {
     await boardPage.searchInput.fill("page");
 
     for (const bug of bugData) {
@@ -51,9 +46,7 @@ test.describe('Search Bug', () => {
     }
   });
 
-  test('shows matching bugs and hides non-matching bugs', async ({ page }) => {
-    const boardPage = new BoardPage(page);
-
+  test('shows matching bugs and hides non-matching bugs', async ({ boardPage }) => {
     await boardPage.searchInput.fill("login");
 
     for (const bug of bugData) {
@@ -66,9 +59,7 @@ test.describe('Search Bug', () => {
     }
   });
 
-  test('shows a no-results message when no bug title matches', async ({ page }) => {
-    const boardPage = new BoardPage(page);
-
+  test('shows a no-results message when no bug title matches', async ({ boardPage }) => {
     await boardPage.searchInput.fill("xyzzy");
 
     await expect(boardPage.noResultsCell).toBeVisible();

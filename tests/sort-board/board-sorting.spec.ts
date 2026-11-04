@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
-import { expect, test, type APIRequestContext } from "@playwright/test";
-import { BoardPage, type SortableColumn } from "../pages/BoardPage";
-import { LoginPage } from "../pages/LoginPage";
+import { type APIRequestContext } from "@playwright/test";
+import { expect, test } from "../fixtures/page-objects";
+import { type BoardPage, type SortableColumn } from "../pages/BoardPage";
 
 interface UserAccount {
   username: string;
@@ -28,11 +28,10 @@ const createdBugIds: number[] = [];
 const sortableColumns: SortableColumn[] = ["ID", "Severity", "Title", "Owner"];
 
 test.describe("Board sorting", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, loginPage }) => {
     createdBugIds.length = 0;
 
     // Arrange: authenticate using the same account as the seed spec.
-    const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.signIn(user.username, user.password);
     await expect(page).toHaveURL(/\/board$/);
@@ -46,8 +45,7 @@ test.describe("Board sorting", () => {
     createdBugIds.length = 0;
   });
 
-  test("shows the default severity-descending sort", async ({ page, request }) => {
-    const boardPage = new BoardPage(page);
+  test("shows the default severity-descending sort", async ({ request, boardPage }) => {
     // Arrange
     const marker = Date.now().toString();
     const bugs: BugInput[] = [
@@ -65,8 +63,7 @@ test.describe("Board sorting", () => {
     await expectOnlySortColumn(boardPage, "Severity", "descending");
   });
 
-  test("sorts titles ascending on the first Title click", async ({ page, request }) => {
-    const boardPage = new BoardPage(page);
+  test("sorts titles ascending on the first Title click", async ({ request, boardPage }) => {
     // Arrange
     const marker = Date.now().toString();
     const bugs: BugInput[] = [
@@ -85,8 +82,7 @@ test.describe("Board sorting", () => {
     await expectOnlySortColumn(boardPage, "Title", "ascending");
   });
 
-  test("toggles Title sorting from ascending to descending", async ({ page, request }) => {
-    const boardPage = new BoardPage(page);
+  test("toggles Title sorting from ascending to descending", async ({ request, boardPage }) => {
     // Arrange
     const marker = Date.now().toString();
     const bugs: BugInput[] = [
@@ -107,8 +103,7 @@ test.describe("Board sorting", () => {
     await expectOnlySortColumn(boardPage, "Title", "descending");
   });
 
-  test("toggles ID sorting between ascending and descending", async ({ page, request }) => {
-    const boardPage = new BoardPage(page);
+  test("toggles ID sorting between ascending and descending", async ({ request, boardPage }) => {
     // Arrange
     const marker = Date.now().toString();
     const bugs = makeBugs(marker, ["One", "Two", "Three"]);
@@ -127,8 +122,7 @@ test.describe("Board sorting", () => {
     await expectOnlySortColumn(boardPage, "ID", "descending");
   });
 
-  test("toggles Owner sorting between ascending and descending", async ({ page, request }) => {
-    const boardPage = new BoardPage(page);
+  test("toggles Owner sorting between ascending and descending", async ({ request, boardPage }) => {
     // Arrange
     const marker = Date.now().toString();
     const bugs: BugInput[] = [
@@ -151,8 +145,7 @@ test.describe("Board sorting", () => {
     await expectOnlySortColumn(boardPage, "Owner", "descending");
   });
 
-  test("toggles Severity sorting from LOW-MID-HIGH to HIGH-MID-LOW", async ({ page, request }) => {
-    const boardPage = new BoardPage(page);
+  test("toggles Severity sorting from LOW-MID-HIGH to HIGH-MID-LOW", async ({ request, boardPage }) => {
     // Arrange
     const marker = Date.now().toString();
     const bugs: BugInput[] = [
@@ -175,8 +168,7 @@ test.describe("Board sorting", () => {
     await expectOnlySortColumn(boardPage, "Severity", "descending");
   });
 
-  test("switches the active sort from Owner to Severity", async ({ page, request }) => {
-    const boardPage = new BoardPage(page);
+  test("switches the active sort from Owner to Severity", async ({ request, boardPage }) => {
     // Arrange: make alphabetical owner order conflict with severity order.
     const marker = Date.now().toString();
     const bugs: BugInput[] = [

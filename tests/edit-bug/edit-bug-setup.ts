@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { expect, type Page, type Request } from "@playwright/test";
-import { BoardPage } from "../pages/BoardPage";
-import { LoginPage } from "../pages/LoginPage";
+import type { BoardPage } from "../pages/BoardPage";
+import type { CreateBugDialog } from "../pages/CreateBugDialog";
+import type { LoginPage } from "../pages/LoginPage";
 
 interface UserAccount {
   username: string;
@@ -33,30 +34,29 @@ if (!user) {
   throw new Error("users.json must contain at least one user account.");
 }
 
-export async function signIn(page: Page): Promise<void> {
-  const loginPage = new LoginPage(page);
+export async function signIn(loginPage: LoginPage): Promise<void> {
   await loginPage.goto();
   await loginPage.signIn(user.username, user.password);
 
-  await expect(page).toHaveURL(/\/board$/);
+  await expect(loginPage.page).toHaveURL(/\/board$/);
 }
 
 export async function createBug(
-  page: Page,
+  boardPage: BoardPage,
+  dialog: CreateBugDialog,
   fixtures: BugFixture[],
   severity: Severity = "mid",
 ): Promise<BugFixture> {
   const title = `edit-test-${randomUUID()}`;
   const description = `Fixture description for ${title}`;
 
-  const boardPage = new BoardPage(page);
-  const dialog = await boardPage.openCreateBugDialog();
+  await boardPage.openCreateBugDialog();
   await dialog.titleInput.fill(title);
   await dialog.severitySelect.selectOption(severity);
   await dialog.ownerInput.fill(user.username);
   await dialog.descriptionInput.fill(description);
 
-  const createResponsePromise = page.waitForResponse(
+  const createResponsePromise = boardPage.page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/bugs",

@@ -1,32 +1,31 @@
 // spec: specs/testing/edit-bug.md
 // seed: tests/seed.spec.ts
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../fixtures/page-objects";
 import {
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
-import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
   let fixture: BugFixture;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
     fixtures = [];
-    await signIn(page);
-    fixture = await createBug(page, fixtures);
+    await signIn(loginPage);
+    fixture = await createBug(boardPage, createBugDialog, fixtures);
   });
 
   test.afterEach(async ({ page }) => {
     await cleanupBugs(page, fixtures);
   });
 
-  test("saves a state change", async ({ page }) => {
-    const boardPage = new BoardPage(page);
+  test("saves a state change", async ({ page, boardPage, editBugDialog }) => {
     // 1. Open the fixture and select Closed.
-    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    await boardPage.openEditBug(fixture.title);
     await editBugDialog.stateSelect.selectOption("closed");
 
     // 2. Save the state change.

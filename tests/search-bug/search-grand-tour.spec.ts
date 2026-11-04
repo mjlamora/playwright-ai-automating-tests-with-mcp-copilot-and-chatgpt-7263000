@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-import { BoardPage } from "../pages/BoardPage";
-import { LoginPage } from "../pages/LoginPage";
+import { expect, test } from "../fixtures/page-objects";
 
 const bugData = [
   { title: 'Login page crashes on empty password', severity: 'HIGH', owner: 'buggy', description: 'App crashes when submitting an empty password on login.' },
@@ -18,8 +16,7 @@ const bugData = [
 test.describe('Search Bug', () => {
   let createdBugIds: number[] = [];
 
-  test.beforeEach(async ({ page, request }) => {
-    const loginPage = new LoginPage(page);
+  test.beforeEach(async ({ page, request, loginPage, boardPage }) => {
     await loginPage.goto();
     await loginPage.signIn("buggy", "1970beetle");
     await expect(page).toHaveURL(/\/board$/);
@@ -33,7 +30,7 @@ test.describe('Search Bug', () => {
     }
 
     // Reload so the board reflects the newly created bugs
-    await new BoardPage(page).reload();
+    await boardPage.reload();
   });
 
   test.afterEach(async ({ request }) => {
@@ -43,9 +40,7 @@ test.describe('Search Bug', () => {
     createdBugIds = [];
   });
 
-  test('Search bugs by title on the board page', async ({ page }) => {
-    const boardPage = new BoardPage(page);
-
+  test('Search bugs by title on the board page', async ({ boardPage }) => {
     // Search "page" → all 10 bugs visible
     await boardPage.searchInput.fill("page");
 

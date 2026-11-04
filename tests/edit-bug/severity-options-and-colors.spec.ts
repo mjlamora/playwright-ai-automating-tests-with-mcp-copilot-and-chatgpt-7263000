@@ -1,6 +1,7 @@
 // spec: specs/testing/edit-bug.md
 // seed: tests/seed.spec.ts
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../fixtures/page-objects";
 import {
   cleanupBugs,
   createBug,
@@ -8,16 +9,15 @@ import {
   type Severity,
   signIn,
 } from "./edit-bug-setup";
-import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
     fixtures = [];
-    await signIn(page);
+    await signIn(loginPage);
     for (const severity of ["high", "mid", "low"] as const) {
-      await createBug(page, fixtures, severity);
+      await createBug(boardPage, createBugDialog, fixtures, severity);
     }
   });
 
@@ -25,8 +25,7 @@ test.describe("Edit bug", () => {
     await cleanupBugs(page, fixtures);
   });
 
-  test("offers all severities with matching color coding", async ({ page }) => {
-    const boardPage = new BoardPage(page);
+  test("offers all severities with matching color coding", async ({ boardPage, editBugDialog }) => {
     // 1. Open the HIGH fixture and verify the severity choices.
     const severities: Severity[] = ["high", "mid", "low"];
     for (const severityValue of severities) {
@@ -39,7 +38,7 @@ test.describe("Edit bug", () => {
         fixture.title,
         severityValue.toUpperCase(),
       );
-      const editBugDialog = await boardPage.openEditBug(fixture.title);
+      await boardPage.openEditBug(fixture.title);
       await expect(editBugDialog.severityOptions).toHaveText([
         "HIGH",
         "MID",

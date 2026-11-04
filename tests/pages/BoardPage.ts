@@ -1,6 +1,4 @@
 import { type Locator, type Page } from "@playwright/test";
-import { CreateBugDialog } from "./CreateBugDialog";
-import { EditBugDialog } from "./EditBugDialog";
 
 export type SortableColumn = "ID" | "Severity" | "Title" | "Owner";
 
@@ -72,13 +70,11 @@ export class BoardPage {
     await this.page.reload();
   }
 
-  async openCreateBugDialog(): Promise<CreateBugDialog> {
+  async openCreateBugDialog(): Promise<void> {
     await this.newBugButton.click();
-    return new CreateBugDialog(this.page);
   }
 
-  async openEditBug(title: string): Promise<EditBugDialog> {
+  async openEditBug(title: string): Promise<void> {
     await this.bugRow(title).click();
-    return new EditBugDialog(this.page);
   }
 }

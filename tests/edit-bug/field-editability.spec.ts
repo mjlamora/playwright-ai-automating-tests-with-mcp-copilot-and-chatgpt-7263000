@@ -1,22 +1,22 @@
 // spec: specs/testing/edit-bug.md
 // seed: tests/seed.spec.ts
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../fixtures/page-objects";
 import {
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./edit-bug-setup";
-import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
   let fixture: BugFixture;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
     fixtures = [];
-    await signIn(page);
-    fixture = await createBug(page, fixtures);
+    await signIn(loginPage);
+    fixture = await createBug(boardPage, createBugDialog, fixtures);
   });
 
   test.afterEach(async ({ page }) => {
@@ -24,11 +24,10 @@ test.describe("Edit bug", () => {
   });
 
   test("keeps the ID read-only and allows editing the other fields", async ({
-    page,
+    boardPage, editBugDialog,
   }) => {
-    const boardPage = new BoardPage(page);
     // 1. Open the fixture bug's row.
-    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    await boardPage.openEditBug(fixture.title);
     const { idInput: id, titleInput: title, severitySelect: severity } = editBugDialog;
     const { stateSelect: state, ownerInput: owner, descriptionInput: description } = editBugDialog;
     await expect(id).toHaveValue(String(fixture.id));
@@ -51,7 +50,8 @@ test.describe("Edit bug", () => {
     await expect(editBugDialog.dialog).toBeHidden();
 
     await boardPage.reload();
-    const reopenedDialog = await boardPage.openEditBug(fixture.title);
+    await boardPage.openEditBug(fixture.title);
+    const reopenedDialog = editBugDialog;
     await expect(reopenedDialog.idInput).toHaveValue(String(fixture.id));
     await expect(reopenedDialog.titleInput).toHaveValue(fixture.title);
   });

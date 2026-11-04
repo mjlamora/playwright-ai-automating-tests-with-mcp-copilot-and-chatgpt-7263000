@@ -18,11 +18,23 @@ Use the Page Object Model (POM) for all new and refactored Playwright tests. Tes
 - Keep scenario setup, test flow, and expected outcomes in the test. Use Playwright's web-first `expect` assertions there; expose a page object's locator when the test needs to assert on page content or state.
 - Keep page objects focused on UI behavior. Put shared non-UI test setup in appropriate fixtures or helpers rather than adding unrelated responsibilities to a page object.
 
+## Page Object Fixtures
+
+Create a Playwright test fixture for every page object. Tests must request page objects through fixtures and must not construct page objects directly.
+
+- Store page object fixtures under `tests/fixtures/`.
+- Define fixtures with Playwright's `test.extend()` pattern as documented in [Playwright fixtures](https://playwright.dev/docs/test-fixtures). Each fixture should construct its page object from the built-in `page` fixture and provide it with `await use(pageObject)`.
+- Provide one named fixture for each page object class, including page-level dialogs. Keep the fixture type declarations aligned with the provided fixture names.
+- Import `test` from the project's custom fixture module in every spec that needs page objects. Request only the page object fixtures used by that test; use fixture-provided instances rather than calling a constructor or creating another instance.
+- Let Playwright manage the lifetime and isolation of fixtures per test. Do not share page object instances globally or retain them between tests.
+- Keep fixtures focused on providing test dependencies. Put reusable actions in page objects and test-specific setup/assertions in the test or a focused helper.
+
 ## File Structure
 
 - Put page object classes under `tests/pages/`.
 - Create one page object class for each application page, such as the login, board, and bug pages.
 - Keep each page object class in its own file; a file must contain no more than one page object class.
+- Put all page object fixtures under `tests/fixtures/`.
 
 ## Preferred Locator Hierarchy
 

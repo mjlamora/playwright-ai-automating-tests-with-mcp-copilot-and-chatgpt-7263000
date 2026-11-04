@@ -1,15 +1,12 @@
-import { expect, test } from "@playwright/test";
-import { PlaywrightDevPage } from "./pages/PlaywrightDevPage";
+import { expect, test } from "./fixtures/page-objects";
 
-test("has title", async ({ page }) => {
-  const playwrightDevPage = new PlaywrightDevPage(page);
+test("has title", async ({ page, playwrightDevPage }) => {
   await playwrightDevPage.goto();
 
   await expect(page).toHaveTitle(/Playwright/);
 });
 
-test("get started link", async ({ page }) => {
-  const playwrightDevPage = new PlaywrightDevPage(page);
+test("get started link", async ({ playwrightDevPage }) => {
   await playwrightDevPage.goto();
 
   await playwrightDevPage.openGettingStarted();

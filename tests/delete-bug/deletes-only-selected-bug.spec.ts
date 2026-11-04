@@ -1,29 +1,32 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../fixtures/page-objects";
 import {
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./delete-bug-setup";
-import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Delete bug", () => {
   let fixtures: BugFixture[] = [];
 
-  test.beforeEach(async ({ page }, testInfo) => {
+  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }, testInfo) => {
     fixtures = [];
-    await signIn(page);
+    await signIn(loginPage);
     const suffix = `${testInfo.workerIndex}-${Date.now()}`;
-    fixtures.push(await createBug(page, `${suffix}-first`));
-    fixtures.push(await createBug(page, `${suffix}-second`));
+    fixtures.push(
+      await createBug(boardPage, createBugDialog, `${suffix}-first`),
+    );
+    fixtures.push(
+      await createBug(boardPage, createBugDialog, `${suffix}-second`),
+    );
   });
 
   test.afterEach(async ({ page }) => {
     await cleanupBugs(page, fixtures);
   });
 
-  test("deletes only the selected bug", async ({ page }) => {
-    const boardPage = new BoardPage(page);
+  test("deletes only the selected bug", async ({ page, boardPage, editBugDialog }) => {
     const [deletedBug, remainingBug] = fixtures;
     if (!deletedBug || !remainingBug) {
       throw new Error("beforeEach must create two bug fixtures.");
@@ -36,7 +39,7 @@ test.describe("Delete bug", () => {
     await expect(remainingBugRow).toBeVisible();
 
     // 2. Delete the first bug.
-    const editBugDialog = await boardPage.openEditBug(deletedBug.title);
+    await boardPage.openEditBug(deletedBug.title);
     await expect(editBugDialog.heading(deletedBug.id)).toBeVisible();
     const deleteResponsePromise = page.waitForResponse(
       (response) =>

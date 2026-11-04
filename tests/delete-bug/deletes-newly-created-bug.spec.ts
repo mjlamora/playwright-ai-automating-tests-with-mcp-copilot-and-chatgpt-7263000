@@ -1,20 +1,24 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../fixtures/page-objects";
 import {
   cleanupBugs,
   createBug,
   type BugFixture,
   signIn,
 } from "./delete-bug-setup";
-import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Delete bug", () => {
   let fixtures: BugFixture[] = [];
 
-  test.beforeEach(async ({ page }, testInfo) => {
+  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }, testInfo) => {
     fixtures = [];
-    await signIn(page);
+    await signIn(loginPage);
     fixtures.push(
-      await createBug(page, `${testInfo.workerIndex}-${Date.now()}`),
+      await createBug(
+        boardPage,
+        createBugDialog,
+        `${testInfo.workerIndex}-${Date.now()}`,
+      ),
     );
   });
 
@@ -22,8 +26,7 @@ test.describe("Delete bug", () => {
     await cleanupBugs(page, fixtures);
   });
 
-  test("deletes a newly created bug", async ({ page }) => {
-    const boardPage = new BoardPage(page);
+  test("deletes a newly created bug", async ({ page, boardPage, editBugDialog }) => {
     const [bug] = fixtures;
     if (!bug) {
       throw new Error("beforeEach must create a bug fixture.");
@@ -34,7 +37,7 @@ test.describe("Delete bug", () => {
     await expect(bugRow).toBeVisible();
 
     // 2. Open the newly created bug.
-    const editBugDialog = await boardPage.openEditBug(bug.title);
+    await boardPage.openEditBug(bug.title);
     await expect(editBugDialog.heading(bug.id)).toBeVisible();
     await expect(editBugDialog.deleteButton).toBeVisible();
 

@@ -1,6 +1,7 @@
 // spec: specs/testing/edit-bug.md
 // seed: tests/seed.spec.ts
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../fixtures/page-objects";
 import {
   cleanupBugs,
   createBug,
@@ -8,26 +9,24 @@ import {
   recordUpdateRequests,
   signIn,
 } from "./edit-bug-setup";
-import { BoardPage } from "../pages/BoardPage";
 
 test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
   let fixture: BugFixture;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
     fixtures = [];
-    await signIn(page);
-    fixture = await createBug(page, fixtures);
+    await signIn(loginPage);
+    fixture = await createBug(boardPage, createBugDialog, fixtures);
   });
 
   test.afterEach(async ({ page }) => {
     await cleanupBugs(page, fixtures);
   });
 
-  test("preserves edits when clicking the backdrop", async ({ page }) => {
-    const boardPage = new BoardPage(page);
+  test("preserves edits when clicking the backdrop", async ({ page, boardPage, editBugDialog }) => {
     // 1. Open the fixture and change its title and description.
-    const editBugDialog = await boardPage.openEditBug(fixture.title);
+    await boardPage.openEditBug(fixture.title);
     const changedTitle = `${fixture.title}-unsaved`;
     const changedDescription = "Unsaved description change";
     await editBugDialog.titleInput.fill(changedTitle);
