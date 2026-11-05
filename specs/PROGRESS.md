@@ -132,3 +132,13 @@ Checklists are updated as each feature is completed. After each feature, the AI 
 ---
 
 _(Add one section per feature; copy the checklist template above.)_
+
+---
+
+## Test plan: REST API (`testing/rest-api.md`)
+
+- [x] Playwright API tests added for health, login, bug list/read/create/update/delete, validation, and persistence
+- [x] Tests create unique records and clean up only records they own
+- [x] API ID parsing and login input validation errors resolved
+- [x] Focused and complete Playwright suites pass
+- [ ] Isolated database empty-state and fault-injection scenarios (not available with the shared test database)
