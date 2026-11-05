@@ -21,9 +21,13 @@ test.describe("Seed", () => {
     loginPage,
     boardPage,
   }) => {
+    // Arrange: navigate to the login page.
     await loginPage.goto();
+
+    // Act: authenticate using the first configured user.
     await loginPage.signIn(user.username, user.password);
 
+    // Assert: login reaches the board and its primary action is available.
     await expect(page).toHaveURL(/\/board$/);
     await expect(boardPage.newBugButton).toBeVisible();
   });

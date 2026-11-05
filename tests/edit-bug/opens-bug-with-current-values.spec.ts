@@ -14,6 +14,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a high-severity fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures, "high");
@@ -24,8 +25,12 @@ test.describe("Edit bug", () => {
   });
 
   test("opens an existing bug with its current values", async ({ boardPage, editBugDialog }) => {
-    // 1. Click the row for the newly created bug.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the fixture bug.
     await boardPage.openEditBug(fixture.title);
+
+    // Assert: the dialog shows all current values and available actions.
     await expect(editBugDialog.dialog).toBeVisible();
     await expect(editBugDialog.heading(fixture.id)).toBeVisible();
     await expect(editBugDialog.idInput).toHaveValue(String(fixture.id));

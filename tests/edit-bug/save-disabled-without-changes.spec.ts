@@ -14,6 +14,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures);
@@ -24,8 +25,12 @@ test.describe("Edit bug", () => {
   });
 
   test("disables Save when there are no changes", async ({ boardPage, editBugDialog }) => {
-    // 1. Open the fixture without changing any field.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the bug without changing any fields.
     await boardPage.openEditBug(fixture.title);
+
+    // Assert: Save is disabled when the form is unchanged.
     await expect(editBugDialog.saveButton).toBeDisabled();
   });
 });

@@ -21,12 +21,16 @@ test("opens the create form with the current user's owner value", async ({
   boardPage,
   createBugDialog,
 }) => {
+  // Arrange: navigate to login and authenticate the user.
   await loginPage.goto();
   await loginPage.signIn(user.username, user.password);
 
   await expect(page).toHaveURL(/\/board$/);
+
+  // Act: open the create bug form.
   await boardPage.openCreateBugDialog();
 
+  // Assert: the form, default values, and available actions are correct.
   await expect(createBugDialog.dialog).toBeVisible();
 
   await expect(createBugDialog.titleInput).toBeVisible();

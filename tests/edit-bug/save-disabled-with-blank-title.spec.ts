@@ -15,6 +15,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures);
@@ -25,17 +26,24 @@ test.describe("Edit bug", () => {
   });
 
   test("disables Save when the title is blank", async ({ page, boardPage, editBugDialog }) => {
-    // 1. Open the fixture and clear Title.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the bug and clear its title.
     await boardPage.openEditBug(fixture.title);
     const updateRequests = recordUpdateRequests(page);
     await editBugDialog.titleInput.fill("");
+
+    // Assert: Save is disabled and no update is sent.
     await expect(editBugDialog.saveButton).toBeDisabled();
     await expect(editBugDialog.titleInput).toHaveValue("");
     expect(updateRequests).toHaveLength(0);
 
+    // Act: reload and reopen the bug.
     await boardPage.reload();
     await boardPage.openEditBug(fixture.title);
     const reopenedDialog = editBugDialog;
+
+    // Assert: the original title was not changed.
     await expect(reopenedDialog.titleInput).toHaveValue(fixture.title);
   });
 });

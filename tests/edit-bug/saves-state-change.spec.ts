@@ -14,6 +14,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures);
@@ -24,11 +25,12 @@ test.describe("Edit bug", () => {
   });
 
   test("saves a state change", async ({ page, boardPage, editBugDialog }) => {
-    // 1. Open the fixture and select Closed.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the bug, change its state, and save.
     await boardPage.openEditBug(fixture.title);
     await editBugDialog.stateSelect.selectOption("closed");
 
-    // 2. Save the state change.
     const updateResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === "PUT" &&
@@ -36,16 +38,21 @@ test.describe("Edit bug", () => {
     );
     await editBugDialog.saveButton.click();
     const updateResponse = await updateResponsePromise;
+
+    // Assert: the update succeeds.
     expect(updateResponse.status()).toBe(200);
     await expect(editBugDialog.dialog).toBeHidden();
 
-    // 3. Select Closed in the board filter.
+    // Act: filter the board to Closed bugs.
     await boardPage.stateFilterButton("Closed").click();
+
+    // Assert: the fixture bug appears in the Closed list.
     await expect(boardPage.bugRow(fixture.title)).toBeVisible();
 
-    // 4. Reload and verify the fixture appears only under Closed.
+    // Act: reload, check Closed, then switch to Open.
     await boardPage.reload();
     await boardPage.stateFilterButton("Closed").click();
+    // Assert: the bug remains under Closed and is absent from Open.
     await expect(boardPage.bugRow(fixture.title)).toBeVisible();
     await boardPage.stateFilterButton("Open").click();
     await expect(boardPage.bugRow(fixture.title)).toHaveCount(0);

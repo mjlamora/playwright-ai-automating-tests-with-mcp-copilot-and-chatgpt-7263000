@@ -17,6 +17,7 @@ test.describe('Search Bug', () => {
   let createdBugIds: number[] = [];
 
   test.beforeEach(async ({ page, request, loginPage, boardPage }) => {
+    // Arrange: sign in, create search fixtures through the API, and reload the board.
     await loginPage.goto();
     await loginPage.signIn("buggy", "1970beetle");
     await expect(page).toHaveURL(/\/board$/);
@@ -41,9 +42,12 @@ test.describe('Search Bug', () => {
   });
 
   test('Search bugs by title on the board page', async ({ boardPage }) => {
-    // Search "page" → all 10 bugs visible
+    // Arrange: the searchable bugs are created in beforeEach.
+
+    // Act: search for "page".
     await boardPage.searchInput.fill("page");
 
+    // Assert: all 10 fixture titles are visible.
     await expect(boardPage.titleCell("Login page crashes on empty password")).toBeVisible();
     await expect(boardPage.titleCell("Login page redirect fails after auth")).toBeVisible();
     await expect(boardPage.titleCell("Login page error message not shown")).toBeVisible();
@@ -55,10 +59,11 @@ test.describe('Search Bug', () => {
     await expect(boardPage.titleCell("Title bar logo missing on page load")).toBeVisible();
     await expect(boardPage.titleCell("Sort resets on page refresh")).toBeVisible();
 
-    // Clear → search "login" → 4 login bugs visible, 6 non-login bugs not visible
+    // Act: search for "login".
     await boardPage.clearSearchButton.click();
     await boardPage.searchInput.fill("login");
 
+    // Assert: matching titles are visible and non-matching titles are hidden.
     await expect(boardPage.titleCell("Login page crashes on empty password")).toBeVisible();
     await expect(boardPage.titleCell("Login page redirect fails after auth")).toBeVisible();
     await expect(boardPage.titleCell("Login page error message not shown")).toBeVisible();
@@ -71,10 +76,11 @@ test.describe('Search Bug', () => {
     await expect(boardPage.titleCell("Title bar logo missing on page load")).not.toBeVisible();
     await expect(boardPage.titleCell("Sort resets on page refresh")).not.toBeVisible();
 
-    // Clear → search "xyzzy" → no-results message shown, no bug titles visible
+    // Act: search for a title fragment that does not match.
     await boardPage.clearSearchButton.click();
     await boardPage.searchInput.fill("xyzzy");
 
+    // Assert: the empty state is shown and all fixture titles are hidden.
     await expect(boardPage.noResultsCell).toBeVisible();
 
     await expect(boardPage.titleCell("Login page crashes on empty password")).not.toBeVisible();

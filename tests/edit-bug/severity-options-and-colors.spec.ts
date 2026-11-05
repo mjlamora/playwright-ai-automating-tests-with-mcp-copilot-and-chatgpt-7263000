@@ -14,6 +14,7 @@ test.describe("Edit bug", () => {
   let fixtures: BugFixture[] = [];
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture for each severity.
     fixtures = [];
     await signIn(loginPage);
     for (const severity of ["high", "mid", "low"] as const) {
@@ -26,7 +27,7 @@ test.describe("Edit bug", () => {
   });
 
   test("offers all severities with matching color coding", async ({ boardPage, editBugDialog }) => {
-    // 1. Open the HIGH fixture and verify the severity choices.
+    // Arrange: severity fixtures are created in beforeEach.
     const severities: Severity[] = ["high", "mid", "low"];
     for (const severityValue of severities) {
       const fixture = fixtures.find((bug) => bug.severity === severityValue);
@@ -38,7 +39,11 @@ test.describe("Edit bug", () => {
         fixture.title,
         severityValue.toUpperCase(),
       );
+
+      // Act: open a bug with this severity.
       await boardPage.openEditBug(fixture.title);
+
+      // Assert: all options are available and the selected value matches the badge color.
       await expect(editBugDialog.severityOptions).toHaveText([
         "HIGH",
         "MID",
@@ -53,8 +58,10 @@ test.describe("Edit bug", () => {
       );
       expect(selectedColor).toBe(badgeColor);
 
-      // 2. Cancel without changing the saved bug.
+      // Act: close without saving.
       await editBugDialog.cancelButton.click();
+
+      // Assert: the dialog closes.
       await expect(editBugDialog.dialog).toBeHidden();
     }
   });

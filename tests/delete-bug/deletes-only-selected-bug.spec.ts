@@ -11,6 +11,7 @@ test.describe("Delete bug", () => {
   let fixtures: BugFixture[] = [];
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }, testInfo) => {
+    // Arrange: sign in and create two fixture bugs.
     fixtures = [];
     await signIn(loginPage);
     const suffix = `${testInfo.workerIndex}-${Date.now()}`;
@@ -27,18 +28,20 @@ test.describe("Delete bug", () => {
   });
 
   test("deletes only the selected bug", async ({ page, boardPage, editBugDialog }) => {
+    // Arrange: the two fixture bugs are created in beforeEach.
     const [deletedBug, remainingBug] = fixtures;
     if (!deletedBug || !remainingBug) {
       throw new Error("beforeEach must create two bug fixtures.");
     }
 
-    // 1. Create two fresh bugs in beforeEach.
     const deletedBugRow = boardPage.bugRow(deletedBug.title);
     const remainingBugRow = boardPage.bugRow(remainingBug.title);
+
+    // Assert: both fixture bugs are initially visible.
     await expect(deletedBugRow).toBeVisible();
     await expect(remainingBugRow).toBeVisible();
 
-    // 2. Delete the first bug.
+    // Act: open and delete the selected bug.
     await boardPage.openEditBug(deletedBug.title);
     await expect(editBugDialog.heading(deletedBug.id)).toBeVisible();
     const deleteResponsePromise = page.waitForResponse(
@@ -48,13 +51,17 @@ test.describe("Delete bug", () => {
     );
     await editBugDialog.deleteButton.click();
     const deleteResponse = await deleteResponsePromise;
+
+    // Assert: only the selected bug is removed.
     expect(deleteResponse.status()).toBe(204);
     await expect(editBugDialog.dialog).toBeHidden();
     await expect(deletedBugRow).toHaveCount(0);
     await expect(remainingBugRow).toBeVisible();
 
-    // 3. Reload to verify only the selected bug was deleted.
+    // Act: reload the board.
     await boardPage.reload();
+
+    // Assert: the selected bug stays deleted and the other remains.
     await expect(boardPage.bugRow(deletedBug.title)).toHaveCount(0);
     await expect(boardPage.bugRow(remainingBug.title)).toBeVisible();
   });

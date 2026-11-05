@@ -15,6 +15,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures);
@@ -25,19 +26,24 @@ test.describe("Edit bug", () => {
   });
 
   test("closes with Escape without saving edits", async ({ page, boardPage, editBugDialog }) => {
-    // 1. Open the fixture and change its title.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the bug, edit its title, and press Escape.
     await boardPage.openEditBug(fixture.title);
     await editBugDialog.titleInput.fill(`${fixture.title}-unsaved`);
     const updateRequests = recordUpdateRequests(page);
 
-    // 2. Press Escape.
     await editBugDialog.closeWithEscape();
+
+    // Assert: the dialog closes without sending an update.
     await expect(editBugDialog.dialog).toBeHidden();
     expect(updateRequests).toHaveLength(0);
 
-    // 3. Reopen to verify the original values.
+    // Act: reopen the fixture bug.
     await boardPage.openEditBug(fixture.title);
     const reopenedDialog = editBugDialog;
+
+    // Assert: all original values are still present.
     await expect(reopenedDialog.titleInput).toHaveValue(fixture.title);
     await expect(reopenedDialog.severitySelect).toHaveValue(fixture.severity);
     await expect(reopenedDialog.stateSelect).toHaveValue(fixture.state);

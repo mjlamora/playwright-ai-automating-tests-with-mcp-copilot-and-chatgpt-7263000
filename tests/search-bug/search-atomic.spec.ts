@@ -17,6 +17,7 @@ test.describe('Search Bug', () => {
   let createdBugIds: number[] = [];
 
   test.beforeEach(async ({ page, request, loginPage, boardPage }) => {
+    // Arrange: sign in, create search fixtures through the API, and reload the board.
     await loginPage.goto();
     await loginPage.signIn("buggy", "1970beetle");
     await expect(page).toHaveURL(/\/board$/);
@@ -39,16 +40,24 @@ test.describe('Search Bug', () => {
   });
 
   test('shows all bugs matching a broad title search', async ({ boardPage }) => {
+    // Arrange: the searchable bugs are created in beforeEach.
+
+    // Act: search for a word shared by all fixture titles.
     await boardPage.searchInput.fill("page");
 
+    // Assert: every fixture title is visible.
     for (const bug of bugData) {
       await expect(boardPage.titleCell(bug.title)).toBeVisible();
     }
   });
 
   test('shows matching bugs and hides non-matching bugs', async ({ boardPage }) => {
+    // Arrange: the searchable bugs are created in beforeEach.
+
+    // Act: search for "login".
     await boardPage.searchInput.fill("login");
 
+    // Assert: matching titles are visible and non-matching titles are hidden.
     for (const bug of bugData) {
       const titleCell = boardPage.titleCell(bug.title);
       if (bug.title.toLowerCase().includes('login')) {
@@ -60,8 +69,12 @@ test.describe('Search Bug', () => {
   });
 
   test('shows a no-results message when no bug title matches', async ({ boardPage }) => {
+    // Arrange: the searchable bugs are created in beforeEach.
+
+    // Act: search for a title fragment that does not match.
     await boardPage.searchInput.fill("xyzzy");
 
+    // Assert: the empty state is shown and fixture titles are hidden.
     await expect(boardPage.noResultsCell).toBeVisible();
 
     for (const bug of bugData) {

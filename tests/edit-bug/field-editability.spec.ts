@@ -14,6 +14,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures);
@@ -26,10 +27,14 @@ test.describe("Edit bug", () => {
   test("keeps the ID read-only and allows editing the other fields", async ({
     boardPage, editBugDialog,
   }) => {
-    // 1. Open the fixture bug's row.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the fixture bug.
     await boardPage.openEditBug(fixture.title);
     const { idInput: id, titleInput: title, severitySelect: severity } = editBugDialog;
     const { stateSelect: state, ownerInput: owner, descriptionInput: description } = editBugDialog;
+
+    // Assert: the ID is read-only and all other fields are editable.
     await expect(id).toHaveValue(String(fixture.id));
     await expect(id).toHaveJSProperty("readOnly", true);
     await expect(title).toBeEditable();
@@ -38,20 +43,25 @@ test.describe("Edit bug", () => {
     await expect(owner).toBeEditable();
     await expect(description).toBeEditable();
 
-    // 2. Change each editable field, then cancel.
+    // Act: change each editable field and cancel.
     await title.fill("Edited title that will be cancelled");
     await severity.selectOption("high");
     await state.selectOption("closed");
     await owner.fill("edited-owner");
     await description.fill("Edited description that will be cancelled");
+
+    // Assert: the ID remains unchanged and saving is enabled for valid edits.
     await expect(id).toHaveValue(String(fixture.id));
     await expect(editBugDialog.saveButton).toBeEnabled();
     await editBugDialog.cancelButton.click();
     await expect(editBugDialog.dialog).toBeHidden();
 
+    // Act: reload and reopen the bug.
     await boardPage.reload();
     await boardPage.openEditBug(fixture.title);
     const reopenedDialog = editBugDialog;
+
+    // Assert: the original ID and title remain unchanged.
     await expect(reopenedDialog.idInput).toHaveValue(String(fixture.id));
     await expect(reopenedDialog.titleInput).toHaveValue(fixture.title);
   });

@@ -15,6 +15,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures);
@@ -25,7 +26,9 @@ test.describe("Edit bug", () => {
   });
 
   test("preserves edits when clicking the backdrop", async ({ page, boardPage, editBugDialog }) => {
-    // 1. Open the fixture and change its title and description.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the bug and make unsaved edits.
     await boardPage.openEditBug(fixture.title);
     const changedTitle = `${fixture.title}-unsaved`;
     const changedDescription = "Unsaved description change";
@@ -33,8 +36,10 @@ test.describe("Edit bug", () => {
     await editBugDialog.descriptionInput.fill(changedDescription);
     const updateRequests = recordUpdateRequests(page);
 
-    // 2. Click the dimmed backdrop outside the modal panel.
+    // Act: click the dimmed backdrop outside the modal panel.
     await editBugDialog.clickBackdrop();
+
+    // Assert: the modal and edits remain, and no update was sent.
     await expect(editBugDialog.dialog).toBeVisible();
     await expect(editBugDialog.titleInput).toHaveValue(changedTitle);
     await expect(editBugDialog.descriptionInput).toHaveValue(changedDescription);

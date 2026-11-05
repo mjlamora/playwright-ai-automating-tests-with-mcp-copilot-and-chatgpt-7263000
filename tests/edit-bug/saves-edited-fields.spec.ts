@@ -14,6 +14,7 @@ test.describe("Edit bug", () => {
   let fixture: BugFixture;
 
   test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
+    // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
     fixture = await createBug(boardPage, createBugDialog, fixtures);
@@ -28,7 +29,9 @@ test.describe("Edit bug", () => {
     boardPage,
     editBugDialog,
   }) => {
-    // 1. Open the fixture and change its editable fields.
+    // Arrange: the fixture bug is created in beforeEach.
+
+    // Act: open the bug, update its editable fields, and save.
     await boardPage.openEditBug(fixture.title);
     const updated = {
       title: `${fixture.title}-updated`,
@@ -41,7 +44,6 @@ test.describe("Edit bug", () => {
     await editBugDialog.ownerInput.fill(updated.owner);
     await editBugDialog.descriptionInput.fill(updated.description);
 
-    // 2. Save the edits.
     const updateResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === "PUT" &&
@@ -49,6 +51,8 @@ test.describe("Edit bug", () => {
     );
     await editBugDialog.saveButton.click();
     const updateResponse = await updateResponsePromise;
+
+    // Assert: the update succeeds and the board shows the changed values.
     expect(updateResponse.status()).toBe(200);
     await expect(editBugDialog.dialog).toBeHidden();
 
@@ -58,10 +62,12 @@ test.describe("Edit bug", () => {
     ).toBeVisible();
     await expect(boardPage.bugOwnerCell(updated.title, updated.owner)).toBeVisible();
 
-    // 3. Reload and verify the saved fields.
+    // Act: reload and reopen the updated bug.
     await boardPage.reload();
     await boardPage.openEditBug(updated.title);
     const reopenedDialog = editBugDialog;
+
+    // Assert: the saved values persist after reload.
     await expect(reopenedDialog.idInput).toHaveValue(String(fixture.id));
     await expect(reopenedDialog.titleInput).toHaveValue(updated.title);
     await expect(reopenedDialog.severitySelect).toHaveValue(updated.severity);
