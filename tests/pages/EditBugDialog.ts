@@ -15,7 +15,7 @@ export class EditBugDialog {
   readonly deleteButton: Locator;
 
   constructor(readonly page: Page) {
-    this.dialog = page.getByRole("dialog");
+    this.dialog = page.getByRole("dialog", { name: /^Edit bug #\d+$/ });
     this.idInput = this.dialog.getByLabel("ID");
     this.titleInput = this.dialog.getByLabel("Title");
     this.severitySelect = this.dialog.getByLabel("Severity");
@@ -30,7 +30,27 @@ export class EditBugDialog {
       name: "Delete",
       exact: true,
     });
+    this.deleteConfirmation = page.getByRole("alertdialog", {
+      name: "Confirm deletion",
+    });
+    this.confirmDeleteButton = this.deleteConfirmation.getByRole("button", {
+      name: "Delete",
+      exact: true,
+    });
+    this.cancelDeleteButton = this.deleteConfirmation.getByRole("button", {
+      name: "Cancel",
+      exact: true,
+    });
+    this.closeDeleteConfirmationButton =
+      this.deleteConfirmation.getByRole("button", {
+        name: "Close confirmation",
+      });
   }
+
+  readonly deleteConfirmation: Locator;
+  readonly confirmDeleteButton: Locator;
+  readonly cancelDeleteButton: Locator;
+  readonly closeDeleteConfirmationButton: Locator;
 
   async closeWithEscape(): Promise<void> {
     await this.page.keyboard.press("Escape");
@@ -38,6 +58,10 @@ export class EditBugDialog {
 
   async clickBackdrop(): Promise<void> {
     await this.dialog.click({ position: { x: 1, y: 1 } });
+  }
+
+  async clickDeleteConfirmationBackdrop(): Promise<void> {
+    await this.deleteConfirmation.click({ position: { x: 1, y: 1 } });
   }
 
   heading(bugId: number): Locator {

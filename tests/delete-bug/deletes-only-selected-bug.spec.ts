@@ -41,18 +41,25 @@ test.describe("Delete bug", () => {
     await expect(deletedBugRow).toBeVisible();
     await expect(remainingBugRow).toBeVisible();
 
-    // Act: open and delete the selected bug.
+    // Act: open the selected bug and request deletion.
     await boardPage.openEditBug(deletedBug.title);
     await expect(editBugDialog.heading(deletedBug.id)).toBeVisible();
+    await editBugDialog.deleteButton.click();
+
+    // Assert: deletion waits for explicit confirmation.
+    await expect(editBugDialog.deleteConfirmation).toBeVisible();
+    await expect(deletedBugRow).toBeVisible();
+
+    // Act: confirm deletion of the selected bug.
     const deleteResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === "DELETE" &&
         new URL(response.url()).pathname === `/api/bugs/${deletedBug.id}`,
     );
-    await editBugDialog.deleteButton.click();
+    await editBugDialog.confirmDeleteButton.click();
     const deleteResponse = await deleteResponsePromise;
 
-    // Assert: only the selected bug is removed.
+    // Assert: confirmation removes only the selected bug.
     expect(deleteResponse.status()).toBe(204);
     await expect(editBugDialog.dialog).toBeHidden();
     await expect(deletedBugRow).toHaveCount(0);

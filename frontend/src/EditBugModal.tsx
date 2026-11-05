@@ -50,6 +50,7 @@ export function EditBugModal({ bug, onClose, onSaved }: EditBugModalProps) {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   const isOpen = bug !== null;
@@ -64,6 +65,7 @@ export function EditBugModal({ bug, onClose, onSaved }: EditBugModalProps) {
       setValidationErrors([]);
       setLoading(false);
       setDeleting(false);
+      setDeleteConfirmationOpen(false);
       queueMicrotask(() => titleInputRef.current?.focus());
     }
   }, [bug]);
@@ -73,12 +75,16 @@ export function EditBugModal({ bug, onClose, onSaved }: EditBugModalProps) {
     function handleEscape(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        if (deleteConfirmationOpen) {
+          setDeleteConfirmationOpen(false);
+        } else {
+          onClose();
+        }
       }
     }
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, deleteConfirmationOpen]);
 
   const initial = bug
     ? {
@@ -163,10 +169,15 @@ export function EditBugModal({ bug, onClose, onSaved }: EditBugModalProps) {
     onClose();
   }
 
-  async function handleDelete() {
+  function handleDelete() {
+    if (!bug || deleting || loading) return;
+    setValidationErrors([]);
+    setDeleteConfirmationOpen(true);
+  }
+
+  async function confirmDelete() {
     if (!bug || deleting || loading) return;
     setDeleting(true);
-    setValidationErrors([]);
     try {
       const res = await fetch(`/api/bugs/${bug.id}`, { method: "DELETE" });
       if (res.ok) {
@@ -176,10 +187,18 @@ export function EditBugModal({ bug, onClose, onSaved }: EditBugModalProps) {
       }
       const data = (await res.json().catch(() => ({}))) as { message?: string };
       setValidationErrors([data.message ?? "Failed to delete bug."]);
+      setDeleteConfirmationOpen(false);
     } catch {
       setValidationErrors(["Something went wrong. Please try again."]);
+      setDeleteConfirmationOpen(false);
     } finally {
       setDeleting(false);
+    }
+  }
+
+  function cancelDeleteConfirmation() {
+    if (!deleting) {
+      setDeleteConfirmationOpen(false);
     }
   }
 
@@ -188,26 +207,71 @@ export function EditBugModal({ bug, onClose, onSaved }: EditBugModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/50"
-      role="dialog"
+      role={deleteConfirmationOpen ? "alertdialog" : "dialog"}
       aria-modal="true"
-      aria-labelledby="edit-bug-modal-title"
+      aria-labelledby={
+        deleteConfirmationOpen
+          ? "delete-bug-confirmation-title"
+          : "edit-bug-modal-title"
+      }
+      aria-describedby={
+        deleteConfirmationOpen ? "delete-bug-confirmation-description" : undefined
+      }
     >
       <div className="flex min-h-full items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-lg border border-stone-200">
         <div className="flex items-center justify-between gap-2 px-6 py-4 border-b border-stone-200">
-          <h2 id="edit-bug-modal-title" className="text-lg font-semibold text-stone-800">
-            Edit bug #{bug.id}
+          <h2
+            id={
+              deleteConfirmationOpen
+                ? "delete-bug-confirmation-title"
+                : "edit-bug-modal-title"
+            }
+            className="text-lg font-semibold text-stone-800"
+          >
+            {deleteConfirmationOpen ? "Confirm deletion" : `Edit bug #${bug.id}`}
           </h2>
           <button
             type="button"
-            onClick={handleCancel}
+            onClick={
+              deleteConfirmationOpen ? cancelDeleteConfirmation : handleCancel
+            }
             className="rounded p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            aria-label="Close"
+            aria-label={deleteConfirmationOpen ? "Close confirmation" : "Close"}
+            disabled={deleting}
           >
             <span className="sr-only">Close</span>
             <span aria-hidden="true">×</span>
           </button>
         </div>
+        {deleteConfirmationOpen ? (
+          <div className="px-6 py-4 space-y-4">
+            <p
+              id="delete-bug-confirmation-description"
+              className="text-sm text-stone-700"
+            >
+              Are you sure you want to permanently delete bug #{bug.id}?
+            </p>
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                type="button"
+                onClick={cancelDeleteConfirmation}
+                className="rounded px-4 py-2 text-sm font-medium text-stone-700 bg-stone-200 hover:bg-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 disabled:opacity-50"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="rounded px-4 py-2 text-sm font-medium text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={deleting}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
           <div>
             <label htmlFor="edit-bug-id" className="block text-sm font-medium text-stone-700 mb-1">
@@ -336,6 +400,7 @@ export function EditBugModal({ bug, onClose, onSaved }: EditBugModalProps) {
             </div>
           </div>
         </form>
+        )}
       </div>
       </div>
     </div>
