@@ -4,6 +4,10 @@
 
 Plan end-to-end coverage for creating a BuggyBoard bug. Tests use `tests/seed.spec.ts` to authenticate. Browser exploration confirmed the Create bug dialog's controls, initial values, required-field feedback, dismissal controls, and successful board update.
 
+## Current Test Coverage
+
+The current Playwright specs `tests/create-bug/opens-create-form-with-defaults.spec.ts` and `tests/create-bug-v2/opens-create-form-with-defaults.spec.ts` are duplicates and only verify that the dialog opens, exposes its controls, and defaults Owner to the signed-in user. The remaining scenarios in this plan—including successful creation, validation, cancellation, X/Escape dismissal, backdrop behavior, and handling save failures—do not yet have dedicated tests. The create form is used as setup in other test areas, but that does not verify these create-flow outcomes.
+
 ## Coverage Review
 
 - The original validation case submitted all fields blank, so it did not independently prove that each required text field is validated or that a failed validation sends no create request.

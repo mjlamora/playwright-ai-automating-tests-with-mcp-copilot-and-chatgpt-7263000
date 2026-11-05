@@ -2,7 +2,11 @@
 
 ## Application Overview
 
-Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature spec defines four sortable columns (ID, Severity, Title, Owner), default Severity descending, ascending-first behavior for an unsorted column, per-column direction toggling, and exactly one active sort indicator. Playwright MCP exploration on /board confirmed the Severity-down default, clicking Title produces ascending order with an up arrow, clicking Title again reverses the order and shows a down arrow, and switching to Owner changes the displayed order. Existing live data was not diverse enough to prove every comparator, so tests should create deterministic fixture bugs through the API and clean them up.
+Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature spec defines four sortable columns (ID, Severity, Title, Owner), default Severity descending, ascending-first behavior for an unsorted column, per-column direction toggling, and exactly one active sort indicator. Playwright CLI exploration on `/board` confirmed the Severity-down default, clicking Title produces ascending order with an up arrow, clicking Title again reverses the order and shows a down arrow, and switching columns changes the active sort. Existing live data was not diverse enough to prove every comparator, so tests create deterministic fixture bugs through the API and clean them up.
+
+## Coverage Assessment
+
+The current suite covers the specified sorting behaviors in `tests/sort-board/board-sorting.spec.ts`: default order, sorting and direction toggles for all four columns, and switching the active sort. The scenario paths below describe the test cases consolidated into that spec file; sorting is not an identified coverage gap.
 
 ## Test Scenarios
 
@@ -12,7 +16,7 @@ Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature sp
 
 #### 1.1. shows bugs in default severity-descending order
 
-**File:** `tests/board-sorting/default-severity-descending.spec.ts`
+**File:** `tests/sort-board/board-sorting.spec.ts`
 
 **Steps:**
   1. Use the authenticated board session and create three OPEN bugs through POST /api/bugs with distinct titles and severities HIGH, MID, and LOW; record returned IDs for cleanup.
@@ -26,7 +30,7 @@ Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature sp
 
 #### 1.2. sorts titles in ascending and descending order
 
-**File:** `tests/board-sorting/sorts-title-ascending-and-descending.spec.ts`
+**File:** `tests/sort-board/board-sorting.spec.ts`
 
 **Steps:**
   1. Create three OPEN fixture bugs with distinct titles in deliberately non-alphabetical order and retain their IDs for cleanup.
@@ -42,7 +46,7 @@ Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature sp
 
 #### 1.3. sorts IDs in ascending and descending order
 
-**File:** `tests/board-sorting/sorts-ids-ascending-and-descending.spec.ts`
+**File:** `tests/sort-board/board-sorting.spec.ts`
 
 **Steps:**
   1. Create three OPEN fixture bugs and retain the numeric IDs returned by the API.
@@ -56,7 +60,7 @@ Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature sp
 
 #### 1.4. sorts owners in ascending and descending order
 
-**File:** `tests/board-sorting/sorts-owners-ascending-and-descending.spec.ts`
+**File:** `tests/sort-board/board-sorting.spec.ts`
 
 **Steps:**
   1. Create three OPEN fixture bugs with distinct owner values (for example, Alice, Margo, and Zed) and retain their IDs.
@@ -70,7 +74,7 @@ Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature sp
 
 #### 1.5. sorts severity in ascending and descending order
 
-**File:** `tests/board-sorting/sorts-severity-ascending-and-descending.spec.ts`
+**File:** `tests/sort-board/board-sorting.spec.ts`
 
 **Steps:**
   1. Create three OPEN fixture bugs with severities HIGH, MID, and LOW and retain their IDs.
@@ -84,7 +88,7 @@ Plan end-to-end coverage for BuggyBoard board sorting. The sort-board feature sp
 
 #### 1.6. switches the active sort to a different column
 
-**File:** `tests/board-sorting/only-one-column-has-active-sort.spec.ts`
+**File:** `tests/sort-board/board-sorting.spec.ts`
 
 **Steps:**
   1. Create three OPEN fixture bugs with conflicting owner/severity ordering: HIGH owned by Zed, MID owned by Alice, and LOW owned by Margo. Retain their IDs for cleanup.
