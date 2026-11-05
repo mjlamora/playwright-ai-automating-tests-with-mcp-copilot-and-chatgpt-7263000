@@ -1,6 +1,12 @@
 import { type Locator, type Page } from "@playwright/test";
 
 export type SortableColumn = "ID" | "Severity" | "Title" | "Owner";
+export type BoardSeverity = "HIGH" | "MID" | "LOW";
+
+export interface SeverityBadgeRuleStyles {
+  color: string;
+  backgroundColor: string;
+}
 
 export class BoardPage {
   readonly newBugButton: Locator;
@@ -38,8 +44,48 @@ export class BoardPage {
     return this.page.getByRole("cell", { name: title, exact: true });
   }
 
-  severityBadge(title: string, severity: string): Locator {
+  severityBadge(title: string, severity: BoardSeverity): Locator {
     return this.bugRow(title).getByText(severity, { exact: true });
+  }
+
+  async severityTokenValue(severity: BoardSeverity): Promise<string> {
+    const token = `--color-severity-${severity.toLowerCase()}`;
+    return this.page.locator("html").evaluate(
+      (root, property) => getComputedStyle(root).getPropertyValue(property).trim(),
+      token,
+    );
+  }
+
+  async severityBadgeRuleStyles(
+    severity: BoardSeverity,
+  ): Promise<SeverityBadgeRuleStyles> {
+    const selector = `.severity-badge-${severity.toLowerCase()}`;
+    return this.page.evaluate((ruleSelector) => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        if (
+          sheet.href &&
+          new URL(sheet.href).origin !== window.location.origin
+        ) {
+          continue;
+        }
+
+        const rule = Array.from(sheet.cssRules).find(
+          (cssRule): cssRule is CSSStyleRule =>
+            cssRule instanceof CSSStyleRule &&
+            cssRule.selectorText === ruleSelector,
+        );
+        if (rule) {
+          return {
+            color: rule.style.getPropertyValue("color").trim(),
+            backgroundColor: rule.style
+              .getPropertyValue("background-color")
+              .trim(),
+          };
+        }
+      }
+
+      throw new Error(`Could not find the ${ruleSelector} CSS rule.`);
+    }, selector);
   }
 
   bugSeverityCell(title: string, severity: string): Locator {
