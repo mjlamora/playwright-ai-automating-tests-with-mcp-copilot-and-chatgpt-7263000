@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect } from "@playwright/test";
 import { test } from "../fixtures/page-objects";
 import {
@@ -10,7 +11,7 @@ import {
 test.describe("Delete bug", () => {
   let fixtures: BugFixture[] = [];
 
-  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }, testInfo) => {
+  test.beforeEach(async ({ loginPage, boardPage, createBugDialog }) => {
     // Arrange: sign in and create a fixture bug.
     fixtures = [];
     await signIn(loginPage);
@@ -18,7 +19,7 @@ test.describe("Delete bug", () => {
       await createBug(
         boardPage,
         createBugDialog,
-        `${testInfo.workerIndex}-${Date.now()}`,
+        randomUUID(),
       ),
     );
   });

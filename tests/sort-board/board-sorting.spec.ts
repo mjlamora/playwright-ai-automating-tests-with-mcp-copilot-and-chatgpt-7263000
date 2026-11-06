@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { type APIRequestContext } from "@playwright/test";
 import { expect, test } from "../fixtures/page-objects";
@@ -47,7 +48,7 @@ test.describe("Board sorting", () => {
 
   test("shows the default severity-descending sort", async ({ request, boardPage }) => {
     // Arrange: create bugs with distinct severities and reload the board.
-    const marker = Date.now().toString();
+    const marker = randomUUID();
     const bugs: BugInput[] = [
       { title: `Sort ${marker} High`, severity: "HIGH", owner: `owner-${marker}`, description: "Sorting fixture" },
       { title: `Sort ${marker} Mid`, severity: "MID", owner: `owner-${marker}`, description: "Sorting fixture" },
@@ -65,7 +66,7 @@ test.describe("Board sorting", () => {
 
   test("sorts titles ascending on the first Title click", async ({ request, boardPage }) => {
     // Arrange: create title values in non-alphabetical order and reload the board.
-    const marker = Date.now().toString();
+    const marker = randomUUID();
     const bugs: BugInput[] = [
       { title: `Sort ${marker} Zulu`, severity: "HIGH", owner: `owner-${marker}`, description: "Sorting fixture" },
       { title: `Sort ${marker} Alpha`, severity: "MID", owner: `owner-${marker}`, description: "Sorting fixture" },
@@ -84,7 +85,7 @@ test.describe("Board sorting", () => {
 
   test("toggles Title sorting from ascending to descending", async ({ request, boardPage }) => {
     // Arrange: create title values and activate ascending Title order.
-    const marker = Date.now().toString();
+    const marker = randomUUID();
     const bugs: BugInput[] = [
       { title: `Sort ${marker} Zulu`, severity: "HIGH", owner: `owner-${marker}`, description: "Sorting fixture" },
       { title: `Sort ${marker} Alpha`, severity: "MID", owner: `owner-${marker}`, description: "Sorting fixture" },
@@ -105,7 +106,7 @@ test.describe("Board sorting", () => {
 
   test("toggles ID sorting between ascending and descending", async ({ request, boardPage }) => {
     // Arrange: create bugs and reload the board.
-    const marker = Date.now().toString();
+    const marker = randomUUID();
     const bugs = makeBugs(marker, ["One", "Two", "Three"]);
     const ids = await createBugs(request, bugs);
     await boardPage.reload();
@@ -128,7 +129,7 @@ test.describe("Board sorting", () => {
 
   test("toggles Owner sorting between ascending and descending", async ({ request, boardPage }) => {
     // Arrange: create owner values in non-alphabetical order and reload the board.
-    const marker = Date.now().toString();
+    const marker = randomUUID();
     const bugs: BugInput[] = [
       { title: `Sort ${marker} Zulu`, severity: "HIGH", owner: `owner-${marker}-Zed`, description: "Sorting fixture" },
       { title: `Sort ${marker} Alice`, severity: "MID", owner: `owner-${marker}-Alice`, description: "Sorting fixture" },
@@ -155,7 +156,7 @@ test.describe("Board sorting", () => {
 
   test("toggles Severity sorting from LOW-MID-HIGH to HIGH-MID-LOW", async ({ request, boardPage }) => {
     // Arrange: create one bug per severity and reload the board.
-    const marker = Date.now().toString();
+    const marker = randomUUID();
     const bugs: BugInput[] = [
       { title: `Sort ${marker} High`, severity: "HIGH", owner: `owner-${marker}`, description: "Sorting fixture" },
       { title: `Sort ${marker} Mid`, severity: "MID", owner: `owner-${marker}`, description: "Sorting fixture" },
@@ -182,7 +183,7 @@ test.describe("Board sorting", () => {
 
   test("switches the active sort from Owner to Severity", async ({ request, boardPage }) => {
     // Arrange: create fixtures whose owner and severity orders differ.
-    const marker = Date.now().toString();
+    const marker = randomUUID();
     const bugs: BugInput[] = [
       { title: `Sort ${marker} High`, severity: "HIGH", owner: `owner-${marker}-Zed`, description: "Sorting fixture" },
       { title: `Sort ${marker} Mid`, severity: "MID", owner: `owner-${marker}-Alice`, description: "Sorting fixture" },

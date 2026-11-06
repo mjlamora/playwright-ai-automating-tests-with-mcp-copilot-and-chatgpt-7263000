@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test } from "../fixtures/page-objects";
 
 const bugData = [
@@ -15,6 +16,7 @@ const bugData = [
 
 test.describe('Search Bug', () => {
   let createdBugIds: number[] = [];
+  let testBugData = bugData;
 
   test.beforeEach(async ({ page, request, loginPage, boardPage }) => {
     // Arrange: sign in, create search fixtures through the API, and reload the board.
@@ -23,7 +25,13 @@ test.describe('Search Bug', () => {
     await expect(page).toHaveURL(/\/board$/);
 
     createdBugIds = [];
-    for (const bug of bugData) {
+    const suffix = randomUUID();
+    testBugData = bugData.map((bug) => ({
+      ...bug,
+      title: `${bug.title} ${suffix}`,
+    }));
+
+    for (const bug of testBugData) {
       const response = await request.post('/api/bugs', { data: bug });
       const body = await response.json();
       createdBugIds.push(body.id);
@@ -46,7 +54,7 @@ test.describe('Search Bug', () => {
     await boardPage.searchInput.fill("page");
 
     // Assert: every fixture title is visible.
-    for (const bug of bugData) {
+    for (const bug of testBugData) {
       await expect(boardPage.titleCell(bug.title)).toBeVisible();
     }
   });
@@ -58,7 +66,7 @@ test.describe('Search Bug', () => {
     await boardPage.searchInput.fill("login");
 
     // Assert: matching titles are visible and non-matching titles are hidden.
-    for (const bug of bugData) {
+    for (const bug of testBugData) {
       const titleCell = boardPage.titleCell(bug.title);
       if (bug.title.toLowerCase().includes('login')) {
         await expect(titleCell).toBeVisible();
@@ -77,7 +85,7 @@ test.describe('Search Bug', () => {
     // Assert: the empty state is shown and fixture titles are hidden.
     await expect(boardPage.noResultsCell).toBeVisible();
 
-    for (const bug of bugData) {
+    for (const bug of testBugData) {
       await expect(boardPage.titleCell(bug.title)).not.toBeVisible();
     }
   });
