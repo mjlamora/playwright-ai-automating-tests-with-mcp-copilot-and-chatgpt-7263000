@@ -140,7 +140,7 @@ test('user creates a bug and views it on the board', async ({ page }) => {
   // Arrange
   const boardPage = new BoardPage(page);
   const modalPage = new CreateBugModal(page);
-  
+
   // Act
   await boardPage.goto();
   await boardPage.clickCreateButton();
@@ -289,7 +289,7 @@ export const test = base.extend<PagesFixtures>({
     // It automatically logs in before the test runs
     await loginPage.goto();
     await loginPage.login('alice', 'password123');
-    
+
     const boardPage = new BoardPage(page);
     await use(boardPage);
   },
@@ -339,7 +339,7 @@ boardPageAuthenticatedAs: async ({ page }, use, testInfo) => {
   const loginPage = new LoginPage(page);
   await loginPage.goto();
   await loginPage.login(username, 'password123');
-  
+
   const boardPage = new BoardPage(page);
   await use(boardPage);
 },
@@ -377,5 +377,5 @@ createModalOpen: async ({ page, boardPage }, use) => {
 
 ---
 
-**Last updated:** May 2026  
+**Last updated:** May 2026
 **Maintained by:** Engineering team

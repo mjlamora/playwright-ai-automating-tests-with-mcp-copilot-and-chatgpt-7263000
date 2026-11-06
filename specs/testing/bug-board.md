@@ -1,42 +1,53 @@
-# Bug Board End-to-End Test Plan
+# Bug Board Display End-to-End Test Plan
 
-## Overview
+## Coverage Assessment
 
-This suite validates the main board page and bug table behavior. It covers table structure, bug row rendering, empty-state behavior, and severity formatting.
+The current tests create and inspect selected rows as setup for sorting, search, severity, edit, and delete scenarios, but no test verifies the board's complete table contract. There is no direct check for its column order, every stored bug appearing once, uppercase severity labels, or the empty-table state required by `specs/features/07-bug-board.md`.
 
-## Suite: Bug Board
+Playwright CLI exploration confirmed the board exposes a table named Bugs with ID, Severity, Title, and Owner columns. The local database contains pre-existing data, so tests for an empty board must not delete shared records.
 
-### Seed
-- `tests/seed.spec.ts`
+## Test Setup
 
-## Scenarios
+- Authenticate using a valid `users.json` account.
+- Create uniquely titled bugs through the API and delete only those test-owned IDs in teardown.
+- For the no-bugs scenario, mock the bugs-list response to return an empty list rather than deleting existing database content.
+- Use `boardPage` and other page-object fixtures from `tests/fixtures/page-objects.ts`.
+- Keep each scenario independent and use Arrange–Act–Assert comments.
 
-#### 1. Board page displays the bug table with correct columns
-- Sign in as a valid user.
-- Navigate to `/board`.
-- Verify the table exists and has columns in the order: ID, Severity, Title, Owner.
+## Test Scenarios
 
-#### 2. Board page shows all bugs from the database
-- Ensure there are bugs in the database.
-- Navigate to `/board`.
-- Verify each bug row shows the bug's ID, severity, title, and owner.
-- Verify the row count matches the number of bugs.
+### Board display
 
-#### 3. Board page shows an empty table with no bugs
-- Ensure the database contains no bugs.
-- Navigate to `/board`.
-- Verify the table is displayed.
-- Verify there are no data rows in the table.
+#### 1. Displays the required columns in order
 
-#### 4. Board page displays severity values in all caps
-- Create or ensure a bug with severity `HIGH`, `MID`, or `LOW` exists.
-- Navigate to `/board`.
-- Verify the severity cell text is displayed as `HIGH`, `MID`, or `LOW`.
+**File:** `tests/bug-board/displays-board-columns-in-order.spec.ts`
 
-#### 5. Board table row click opens bug details
-- Ensure a bug exists in the table.
-- Click a bug row.
-- Verify the edit bug modal opens with the selected bug's details.
+**Arrange:** Authenticate and load the board.
 
-## Notes
-- This plan covers board page rendering and row-level navigation into bug details.
+**Act:** Inspect the Bugs table header row.
+
+**Assert:** The table has the columns ID, Severity, Title, and Owner, in that left-to-right order.
+
+#### 2. Displays all bugs and their row values
+
+**File:** `tests/bug-board/displays-all-bugs.spec.ts`
+
+**Arrange:** Create several distinct bugs through the API, including different severity values, and reload the board.
+
+**Act:** Inspect the table rows.
+
+**Assert:**
+
+- Each created bug appears exactly once.
+- Each row shows the bug's ID, severity, title, and owner matching its API data.
+- Severity labels are displayed in uppercase.
+
+#### 3. Displays an empty table when there are no bugs
+
+**File:** `tests/bug-board/displays-empty-board.spec.ts`
+
+**Arrange:** Authenticate and route the bugs-list request to a successful empty-list response.
+
+**Act:** Load the board.
+
+**Assert:** The Bugs table and its column headers remain visible, with no data rows.

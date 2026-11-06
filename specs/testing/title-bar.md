@@ -1,35 +1,31 @@
 # Title Bar End-to-End Test Plan
 
-## Overview
+## Coverage Assessment
 
-This suite validates the BuggyBoard title bar on the board page. It covers layout, branding, and presence of key header elements used by authenticated users.
+The board is exercised throughout the suite, but no test verifies the title bar as a component. Some tests use New Bug or the search field without asserting the title bar's required branding and layout. Playwright CLI exploration showed a banner containing a BuggyBoard image, the BuggyBoard heading, Search, New Bug, and Logout controls. The title-bar acceptance criteria in `specs/features/04-title-bar.md` are not directly tested.
 
-## Suite: Title Bar
+## Test Setup
 
-### Seed
-- `tests/seed.spec.ts`
+- Authenticate with a valid account from `users.json`.
+- Use the `boardPage` fixture; add only the page-object locators needed for banner assertions.
+- Use semantic roles and accessible names rather than positional or styling selectors.
+- Use Arrange–Act–Assert comments.
 
-## Scenarios
+## Test Scenarios
 
-#### 1. Board page displays the title bar
-- Sign in as a valid user.
-- Navigate to the board page.
-- Verify the title bar is displayed across the top of the page.
+### Title bar
 
-#### 2. Title bar shows the BuggyBoard logo
-- Verify the board page header includes the logo asset.
-- Verify the logo is visible in a rounded box.
+#### 1. Displays the required brand and logout control in the specified layout
 
-#### 3. Title bar shows the app title text
-- Verify the title bar contains the text `BuggyBoard` next to the logo.
+**File:** `tests/title-bar/displays-title-bar-branding.spec.ts`
 
-#### 4. Title bar shows the logout button
-- Verify the title bar includes a logout button.
-- Verify the logout button is right-justified in the header.
+**Arrange:** Authenticate and navigate to `/board`.
 
-#### 5. Title bar styling follows the app theme
-- Verify the title bar renders using the application theme styling.
-- Verify the header background and text contrast matches the design system.
+**Act:** Inspect the page banner.
 
-## Notes
-- Title-bar tests are focused on visibility and layout; interaction tests are covered in logout tests.
+**Assert:**
+
+- The banner contains the BuggyBoard logo with an accessible name.
+- The BuggyBoard heading appears beside the logo.
+- The Logout button is visible and aligned to the right.
+- The logo and title are left-aligned, with the title immediately to the right of the logo.

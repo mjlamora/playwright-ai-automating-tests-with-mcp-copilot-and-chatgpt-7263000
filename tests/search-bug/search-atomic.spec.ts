@@ -1,5 +1,5 @@
-import { test, expect } from '../fixtures/pages';
-import { LoginPage } from '../pages/LoginPage';
+import { randomUUID } from "node:crypto";
+import { expect, test } from "../fixtures/page-objects";
 
 const bugData = [
   { title: 'Login page crashes on empty password', severity: 'HIGH', owner: 'buggy', description: 'App crashes when submitting an empty password on login.' },
@@ -16,30 +16,28 @@ const bugData = [
 
 test.describe('Search Bug', () => {
   let createdBugIds: number[] = [];
-  let workerBugData: typeof bugData;
+  let testBugData = bugData;
 
-  test.beforeEach(async ({ page, request, loginPage, boardPage }, testInfo) => {
-    // Create worker-scoped bug data to avoid collisions in parallel execution
-    const workerIndex = testInfo.workerIndex;
-    workerBugData = bugData.map(bug => ({
+  test.beforeEach(async ({ page, request, loginPage, boardPage }) => {
+    // Arrange: sign in, create search fixtures through the API, and reload the board.
+    await loginPage.goto();
+    await loginPage.signIn("buggy", "1970beetle");
+    await expect(page).toHaveURL(/\/board$/);
+
+    createdBugIds = [];
+    const suffix = randomUUID();
+    testBugData = bugData.map((bug) => ({
       ...bug,
-      title: `${bug.title} [W${workerIndex}]`
+      title: `${bug.title} ${suffix}`,
     }));
 
-    // Arrange - Login via UI
-    await loginPage.goto();
-    await loginPage.login('buggy', '1970beetle');
-
-    // Create 10 bugs via API with worker-scoped titles
-    createdBugIds = [];
-    for (const bug of workerBugData) {
+    for (const bug of testBugData) {
       const response = await request.post('/api/bugs', { data: bug });
       const body = await response.json();
       createdBugIds.push(body.id);
     }
 
-    // Reload so the board reflects the newly created bugs
-    await page.reload();
+    await boardPage.reload();
   });
 
   test.afterEach(async ({ request }) => {
@@ -49,44 +47,46 @@ test.describe('Search Bug', () => {
     createdBugIds = [];
   });
 
-  test('Search bugs by title matching multiple results', async ({ boardPage }) => {
-    // Act
-    await boardPage.searchByTitle('page');
+  test('shows all bugs matching a broad title search', async ({ boardPage }) => {
+    // Arrange: the searchable bugs are created in beforeEach.
 
-    // Assert - verify all bugs matching 'page' are visible
-    const pageBugs = workerBugData.filter(bug => bug.title.toLowerCase().includes('page'));
-    for (const bug of pageBugs) {
-      await expect(await boardPage.getBugCellByTitle(bug.title)).toBeVisible();
+    // Act: search for a word shared by all fixture titles.
+    await boardPage.searchInput.fill("page");
+
+    // Assert: every fixture title is visible.
+    for (const bug of testBugData) {
+      await expect(boardPage.titleCell(bug.title)).toBeVisible();
     }
   });
 
-  test('Search bugs by title matching subset of results', async ({ boardPage }) => {
-    // Act
-    await boardPage.searchByTitle('login');
+  test('shows matching bugs and hides non-matching bugs', async ({ boardPage }) => {
+    // Arrange: the searchable bugs are created in beforeEach.
 
-    // Assert - verify only bugs with 'login' in title are visible
-    const loginBugs = workerBugData.filter(bug => bug.title.toLowerCase().includes('login'));
-    const otherBugs = workerBugData.filter(bug => !bug.title.toLowerCase().includes('login'));
+    // Act: search for "login".
+    await boardPage.searchInput.fill("login");
 
-    for (const bug of loginBugs) {
-      await expect(await boardPage.getBugCellByTitle(bug.title)).toBeVisible();
-    }
-
-    for (const bug of otherBugs) {
-      await expect(await boardPage.getBugCellByTitle(bug.title)).not.toBeVisible();
+    // Assert: matching titles are visible and non-matching titles are hidden.
+    for (const bug of testBugData) {
+      const titleCell = boardPage.titleCell(bug.title);
+      if (bug.title.toLowerCase().includes('login')) {
+        await expect(titleCell).toBeVisible();
+      } else {
+        await expect(titleCell).not.toBeVisible();
+      }
     }
   });
 
-  test('Search bugs by title with no matches', async ({ boardPage }) => {
-    // Act
-    await boardPage.searchByTitle('xyzzy');
+  test('shows a no-results message when no bug title matches', async ({ boardPage }) => {
+    // Arrange: the searchable bugs are created in beforeEach.
 
-    // Assert - no results message appears
-    await expect(await boardPage.getNoResultsMessage()).toBeVisible();
+    // Act: search for a title fragment that does not match.
+    await boardPage.searchInput.fill("xyzzy");
 
-    // All bugs should be hidden
-    for (const bug of workerBugData) {
-      await expect(await boardPage.getBugCellByTitle(bug.title)).not.toBeVisible();
+    // Assert: the empty state is shown and fixture titles are hidden.
+    await expect(boardPage.noResultsCell).toBeVisible();
+
+    for (const bug of testBugData) {
+      await expect(boardPage.titleCell(bug.title)).not.toBeVisible();
     }
   });
 });

@@ -1,40 +1,46 @@
 # Logout End-to-End Test Plan
 
-## Overview
+## Coverage Assessment
 
-This suite validates authenticated sign-out behavior in BuggyBoard. It covers logout interaction, protected route enforcement after logout, browser navigation after logout, and session invalidation.
+No current Playwright test clicks Logout or checks authentication after logout. Playwright CLI exploration confirmed that the board title bar exposes a Logout button and that clicking it navigates to `/login`. The remaining logout and history behaviors in `specs/features/05-logout.md` are not tested.
 
-## Suite: Logout
+## Test Setup
 
-### Seed
-- `tests/seed.spec.ts`
+- Load valid credentials from `users.json` and authenticate using the `loginPage` fixture.
+- Use the `boardPage` and `loginPage` fixtures from `tests/fixtures/page-objects.ts`.
+- Keep tests isolated; do not depend on session state from another test.
+- Use Arrange–Act–Assert comments.
 
-## Scenarios
+## Test Scenarios
 
-#### 1. Authenticated user can log out
-- Sign in as a valid user.
-- Navigate to the board page.
-- Click the logout button in the title bar.
-- Verify the app logs the user out.
-- Verify the app redirects to `/login`.
+### Logout
 
-#### 2. User cannot access protected pages after logout
-- Sign in and then log out.
-- Attempt to navigate to `/board`.
-- Verify the app redirects to `/login`.
+#### 1. Logs out and redirects to Login
 
-#### 3. Browser back button after logout does not restore session
-- Sign in and then log out.
-- Confirm the login page is visible.
-- Use the browser back button.
-- Verify the app does not restore the previous authenticated session.
-- Verify the user stays on `/login` and remains unauthenticated.
+**File:** `tests/logout/logs-out-and-redirects-to-login.spec.ts`
 
-#### 4. Logged-out user landing on protected page is redirected to login
-- Sign in and log out.
-- Use a direct URL to open a protected route such as `/board`.
-- Verify the app redirects to `/login`.
+**Arrange:** Authenticate and verify that `/board` is displayed.
 
-## Notes
-- Tests should assert the logout button is visible only after authentication.
-- If there is a confirmation prompt for logout, include it in the logout scenario.
+**Act:** Click Logout.
+
+**Assert:** The browser navigates to `/login`, and login controls are visible.
+
+#### 2. Blocks protected content after logout
+
+**File:** `tests/logout/blocks-board-after-logout.spec.ts`
+
+**Arrange:** Authenticate, then log out.
+
+**Act:** Navigate directly to `/board`.
+
+**Assert:** The user is redirected to `/login`; board content is not available.
+
+#### 3. Does not restore authentication through browser history
+
+**File:** `tests/logout/does-not-restore-session-with-back-button.spec.ts`
+
+**Arrange:** Authenticate and log out, leaving the browser on `/login`.
+
+**Act:** Use the browser Back button.
+
+**Assert:** The user remains unauthenticated; protected content is not restored and any protected-page navigation resolves to `/login`.

@@ -1,18 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "./fixtures/page-objects";
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test("has title", async ({ page, playwrightDevPage }) => {
+  // Arrange: navigate to the Playwright documentation site.
+  await playwrightDevPage.goto();
 
-  // Expect a title "to contain" a substring.
+  // Assert: the document title identifies Playwright.
   await expect(page).toHaveTitle(/Playwright/);
 });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test("get started link", async ({ playwrightDevPage }) => {
+  // Arrange: navigate to the Playwright documentation site.
+  await playwrightDevPage.goto();
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+  // Act: follow the Get started link.
+  await playwrightDevPage.openGettingStarted();
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+  // Assert: the installation page is shown.
+  await expect(playwrightDevPage.installationHeading).toBeVisible();
 });

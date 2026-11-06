@@ -1,33 +1,48 @@
-import { test, expect } from '@playwright/test';
-import users from '../users.json' with { type: 'json' };
+import { readFileSync } from "node:fs";
+import { test, expect } from "@playwright/test";
 
-const user = users[0];
+interface UserAccount {
+  username: string;
+  password: string;
+}
 
-test('logs in and creates a new bug', async ({ page }) => {
-  const bugTitle = 'Playwright test bug';
-  const bugDescription = 'Created by an automated test.';
-  const bugOwner = user.username;
+const users = JSON.parse(
+  readFileSync(new URL("../users.json", import.meta.url), "utf8"),
+) as UserAccount[];
+const [user] = users;
 
-  await page.goto('/login');
-  await page.fill('#username', user.username);
-  await page.fill('#password', user.password);
-  await page.click('button:has-text("Login")');
+if (!user) {
+  throw new Error("users.json must contain at least one user account.");
+}
+
+test("logs in and creates a bug", async ({ page }) => {
+  const title = `Playwright-created bug ${new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })}`;
+  const description = "Created by the BuggyBoard Playwright test.";
+
+  await page.goto("/login");
+  await page.getByLabel("Username").fill(user.username);
+  await page.getByLabel("Password").fill(user.password);
+  await page.getByRole("button", { name: "Login" }).click();
 
   await expect(page).toHaveURL(/\/board$/);
-  await expect(page.getByRole('button', { name: 'New Bug' })).toBeVisible();
+  await page.getByRole("button", { name: "New Bug" }).click();
 
-  await page.click('button:has-text("New Bug")');
-  const dialog = page.getByRole('dialog', { name: 'Create bug' });
+  const dialog = page.getByRole("dialog", { name: "Create bug" });
   await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Title").fill(title);
+  await dialog.getByLabel("Severity").selectOption("high");
+  await dialog.getByLabel("Owner").fill(user.username);
+  await dialog.getByLabel("Description").fill(description);
 
-  await dialog.locator('#bug-title').fill(bugTitle);
-  await dialog.locator('#bug-severity').selectOption('high');
-  await dialog.locator('#bug-owner').fill(bugOwner);
-  await dialog.locator('#bug-description').fill(bugDescription);
-  await dialog.getByRole('button', { name: 'Save' }).click();
+  const createBugResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/bugs") &&
+      response.request().method() === "POST",
+  );
+  await dialog.getByRole("button", { name: "Save" }).click();
 
+  const response = await createBugResponse;
+  expect(response.status()).toBe(201);
   await expect(dialog).toBeHidden();
-  await expect(
-    page.locator('table[aria-label="Bugs"] td', { hasText: bugTitle }).first()
-  ).toBeVisible();
+  await expect(page.getByRole("cell", { name: title })).toBeVisible();
 });

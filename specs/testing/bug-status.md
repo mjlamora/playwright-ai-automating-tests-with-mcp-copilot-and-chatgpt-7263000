@@ -1,60 +1,78 @@
 # Bug Status End-to-End Test Plan
 
-## Overview
+## Coverage Assessment
 
-This suite validates bug state management and state filtering in BuggyBoard. It covers open/closed state persistence, edit-modal state updates, default state filter behavior, closed-state filtering, and interaction with search and sorting.
+`tests/edit-bug/saves-state-change.spec.ts` verifies that an existing bug can be changed to Closed, persists after reload, appears under Closed, and is absent under Open. `tests/edit-bug/opens-bug-with-current-values.spec.ts` checks that the edit dialog has a state value. No test creates a bug and verifies its initial Open state, checks the default Open filter against a mixed dataset, verifies Closed-only results or an empty Closed state, or checks search/sort composition with the state filter.
 
-## Suite: Bug Status
+Playwright CLI exploration confirmed the board provides Open and Closed controls, Open is selected by default, and selecting Closed with no closed bugs displays “No bugs matched.”
 
-### Seed
-- `tests/seed.spec.ts`
+## Test Setup
 
-## Scenarios
+- Authenticate with a valid account from `users.json`.
+- Create uniquely titled open and closed fixtures through the API; record IDs and delete only those fixtures in teardown.
+- Use the existing `boardPage`, `createBugDialog`, and `editBugDialog` fixtures.
+- Keep scenarios independent and follow Arrange–Act–Assert.
 
-#### 1. New bugs are created with state Open
-- Sign in as a valid user.
-- Create a new bug via the New Bug modal.
-- Verify the bug is saved with state Open.
-- Verify the bug appears when the state filter is set to Open.
+## Test Scenarios
 
-#### 2. Edit bug modal displays state and allows changing it
-- Ensure a bug exists.
-- Open the bug from the board.
-- Verify the edit modal shows the bug's state field.
-- Change the state from Open to Closed.
-- Save the bug.
-- Verify the bug state is updated in the database.
+### Bug status
 
-#### 3. Board state filter defaults to Open
-- Sign in as a valid user.
-- Ensure there are open and closed bugs.
-- Navigate to `/board`.
-- Verify Open is selected by default in the state filter.
-- Verify only open bugs are displayed.
+#### 1. Creates new bugs as Open
 
-#### 4. Selecting Closed shows only closed bugs
-- Ensure there are both open and closed bugs.
-- Select Closed in the state filter.
-- Verify only closed bugs are displayed.
-- Verify no open bugs are visible.
+**File:** `tests/bug-status/creates-bugs-as-open.spec.ts`
 
-#### 5. Sorting works with a state filter applied
-- Select a state filter such as Open.
-- Sort the board by a column (e.g. Title ascending).
-- Verify only bugs matching the selected state are displayed.
-- Verify those bugs are sorted as requested.
+**Arrange:** Authenticate and open the New Bug dialog.
 
-#### 6. Search and state filter apply together
-- Select a state filter (Open or Closed).
-- Enter a search query.
-- Verify the board displays only bugs that match both the state and the search text.
+**Act:** Create a valid bug through the UI.
 
-#### 7. No bugs matched message when selected state has no bugs
-- Ensure the selected state filter has no matching bugs.
-- Navigate to `/board`.
-- Verify the board displays a no-results message.
-- Verify the bug table has no rows.
+**Assert:** The create response and persisted bug have state Open, and the bug appears with Open selected.
 
-## Notes
-- If the app does not yet support bug state changes in the create modal, focus these tests on the edit modal and state filter.
-- Use deterministic bug data so Open/Closed filtering expectations are clear.
+#### 2. Defaults the board filter to Open
+
+**File:** `tests/bug-status/defaults-to-open-bugs.spec.ts`
+
+**Arrange:** Create at least one Open and one Closed fixture bug.
+
+**Act:** Navigate to or reload the board without changing the state filter.
+
+**Assert:** Open is selected, Open fixtures are visible, and Closed fixtures are absent.
+
+#### 3. Shows only Closed bugs when Closed is selected
+
+**File:** `tests/bug-status/filters-closed-bugs.spec.ts`
+
+**Arrange:** Create both Open and Closed fixture bugs.
+
+**Act:** Select Closed.
+
+**Assert:** Closed fixtures are visible and Open fixtures are absent.
+
+#### 4. Shows the empty-state message when a selected state has no bugs
+
+**File:** `tests/bug-status/shows-empty-state-for-selected-status.spec.ts`
+
+**Arrange:** Ensure the fixture dataset has Open bugs and no Closed bugs.
+
+**Act:** Select Closed.
+
+**Assert:** “No bugs matched.” is displayed and there are no bug rows.
+
+#### 5. Applies sorting to the selected state
+
+**File:** `tests/bug-status/sorts-with-state-filter.spec.ts`
+
+**Arrange:** Create Open and Closed fixtures with titles that sort differently; select Open.
+
+**Act:** Sort by Title.
+
+**Assert:** Only Open fixtures are shown and they follow the selected Title sort order.
+
+#### 6. Applies search and state filtering together
+
+**File:** `tests/bug-status/searches-with-state-filter.spec.ts`
+
+**Arrange:** Create Open and Closed fixtures with both matching and non-matching title fragments.
+
+**Act:** Select a state and enter a query matching bugs across both states.
+
+**Assert:** Only bugs matching both the selected state and the title query are displayed.
