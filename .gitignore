@@ -15,14 +15,10 @@ backend/dist
 backend/data
 
 # Playwright
-playwright-report/
-test-results/
-
-# Playwright
 /playwright-report/
 /blob-report/
+/test-results/
 /playwright/.cache/
 /playwright/.auth/
 .playwright-mcp
-# Playwright CLI output (may contain credentials)
 .playwright-cli/

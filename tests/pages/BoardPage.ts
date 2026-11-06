@@ -120,6 +120,30 @@ export class BoardPage {
     await this.newBugButton.click();
   }
 
+  async clickNewBugButton(): Promise<void> {
+    await this.openCreateBugDialog();
+  }
+
+  async searchByTitle(searchTerm: string): Promise<void> {
+    await this.searchInput.fill(searchTerm);
+  }
+
+  getBugCellByTitle(title: string): Locator {
+    return this.titleCell(title);
+  }
+
+  getBugRowByTitle(title: string): Locator {
+    return this.bugRow(title);
+  }
+
+  getNoResultsMessage(): Locator {
+    return this.noResultsCell;
+  }
+
+  async clickBugByTitle(title: string): Promise<void> {
+    await this.openEditBug(title);
+  }
+
   async openEditBug(title: string): Promise<void> {
     await this.bugRow(title).click();
   }
